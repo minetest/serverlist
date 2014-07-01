@@ -58,15 +58,15 @@ def announce():
 	if server["action"] == "start":
 		server["uptime"] = 0
 
-	if server["action"] != "delete" and not checkRequest(server):
-		return "Invalid JSON data.", 400
-
 	server["ip"] = ip
 
 	if not "port" in server:
 		server["port"] = 30000
-	elif type(server["port"]) == type(""):
+	#### Compatability code ####
+	# port was sent as a string instead of an integer
+	elif type(server["port"]) == str:
 		server["port"] = int(server["port"])
+	#### End compatability code ####
 
 	old = getServer(server["ip"], server["port"])
 
@@ -76,10 +76,11 @@ def announce():
 		removeServer(old)
 		saveList()
 		return "Removed from server list."
+	elif not checkRequest(server):
+		return "Invalid JSON data.", 400
 
 	if server["action"] != "start" and not old:
-		# Server to update not found, continue as a new server
-		server["action"] = "start"
+		return "Server to update not found.", 500
 
 	server["update_time"] = time.time()
 
@@ -254,7 +255,7 @@ def checkRequest(server):
 		if data[1] == "bool":
 			server[name] = True if server[name] else False
 			continue
-		# clients_max was  sent as strings instead of integers
+		# clients_max was sent as a string instead of an integer
 		if name == "clients_max" and type(server[name]).__name__ == "str":
 			server[name] = int(server[name])
 			continue

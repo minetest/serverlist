@@ -62,18 +62,26 @@ Setting up the server
 		# # OR:
 		# apt-get install python3 python3-pip
 
-  2. Install Flask, APSchedule, and (if using in production) uwsgi:
+  2. Install Flask, and APSchedule:
 
 		# # You might have to use pip3 if your system defaults to Python 2
-		# pip install APSchedule flask uwsgi
+		# pip install APSchedule flask
 
-  3. Configure the server by changing options in config.py, which is a Flask
+  3. If using in production, innstall uwsgi and it's python plugin:
+
+		# pacman -S uwsgi uwsgi-plugin-python
+		# # OR:
+		# apt-get install uwsgi uwsgi-plugin-python
+		# # OR:
+		# pip install uwsgi
+
+  4. Configure the server by changing options in config.py, which is a Flask
 	configuration file.
 
-  4. Start the server:
+  5. Start the server:
 
 		$ ./server.py
 		$ # Or for production:
-		$ uwsgi -s /tmp/serverlist.sock -w server:app
+		$ uwsgi -s /tmp/serverlist.sock --plugin python -w server:app --enable-threads
 		$ # Then configure according to http://flask.pocoo.org/docs/deploying/uwsgi/
 

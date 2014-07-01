@@ -65,6 +65,8 @@ def announce():
 
 	if not "port" in server:
 		server["port"] = 30000
+	elif type(server["port"]) == type(""):
+		server["port"] = int(server["port"])
 
 	old = getServer(server["ip"], server["port"])
 
@@ -252,9 +254,8 @@ def checkRequest(server):
 		if data[1] == "bool":
 			server[name] = True if server[name] else False
 			continue
-		# clients_max and port were sent as strings instead of integers
-		if (name == "clients_max" or name == "port") and\
-				type(server[name]).__name__ == "str":
+		# clients_max was  sent as strings instead of integers
+		if name == "clients_max" and type(server[name]).__name__ == "str":
 			server[name] = int(server[name])
 			continue
 		#### End compatibility code ####
@@ -316,4 +317,3 @@ purgeOld()
 
 if __name__ == "__main__":
 	app.run(host = app.config["HOST"], port = app.config["PORT"])
-

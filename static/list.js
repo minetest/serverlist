@@ -7,7 +7,7 @@ if (!master.list_root)	master.list_root = master.root;
 if (!master.list_url)	master.list_url = master.list_root + master.list;
 
 function humanTime(seconds) {
-	if (!seconds) return '?';
+	if (typeof(seconds) != "number") return '?';
 	var conv = {
 		y: 31536000,
 		d: 86400,

@@ -67,7 +67,7 @@ Setting up the server
 		# # You might have to use pip3 if your system defaults to Python 2
 		# pip install APSchedule flask
 
-  3. If using in production, innstall uwsgi and it's python plugin:
+  3. If using in production, install uwsgi and it's python plugin:
 
 		# pacman -S uwsgi uwsgi-plugin-python
 		# # OR:

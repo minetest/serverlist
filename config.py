@@ -24,3 +24,6 @@ PURGE_TIME = 350
 # List of banned IP addresses.
 BANLIST = []
 
+# Creates server entries if a server sends an 'update' and there is no entry yet
+# This should only be used to populate the server list after list.json was deleted.
+ALLOW_UPDATE_WITHOUT_OLD = False

@@ -83,7 +83,14 @@ def announce():
 		return "Invalid JSON data.", 400
 
 	if server["action"] != "start" and not old:
-		return "Server to update not found.", 500
+		if app.config["ALLOW_UPDATE_WITHOUT_OLD"]:
+			old = server
+			old["start"] = time.time()
+			old["clients_top"] = 0
+			old["updates"] = 0
+			old["total_clients"] = 0
+		else:
+			return "Server to update not found.", 500
 
 	server["update_time"] = time.time()
 
@@ -247,6 +254,7 @@ fields = {
 	"rollback": (False, "bool"),
 	"can_see_far_names": (False, "bool"),
 }
+
 def checkRequest(server):
 	for name, data in fields.items():
 		if not name in server:

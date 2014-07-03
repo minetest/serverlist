@@ -52,6 +52,9 @@ def announce():
 	except:
 		return "Unable to process JSON data.", 400
 
+	if type(server) != dict:
+		return "JSON data is not an object.", 400
+
 	if not "action" in server:
 		return "Missing action field.", 400
 

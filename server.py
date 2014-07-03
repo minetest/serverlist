@@ -253,10 +253,10 @@ def checkRequest(server):
 			if data[0]: return False
 			else: continue
 		#### Compatibility code ####
-		# Accept anything in boolean fields but convert it to a
-		# boolean, because old servers send some booleans as strings.
-		if data[1] == "bool":
-			server[name] = True if server[name] else False
+		# Accept strings in boolean fields but convert it to a
+		# boolean, because old servers sent some booleans as strings.
+		if data[1] == "bool" and type(server[name]).__name__ == "str":
+			server[name] = True if server[name].lower() in ["true", "1"] else False
 			continue
 		# clients_max was sent as a string instead of an integer
 		if name == "clients_max" and type(server[name]).__name__ == "str":

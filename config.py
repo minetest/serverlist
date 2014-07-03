@@ -26,4 +26,5 @@ BANLIST = []
 
 # Creates server entries if a server sends an 'update' and there is no entry yet
 # This should only be used to populate the server list after list.json was deleted.
+# This WILL cause problems such as mapgen, mods and privilege information missing from the list
 ALLOW_UPDATE_WITHOUT_OLD = False

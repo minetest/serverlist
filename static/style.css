@@ -16,7 +16,7 @@ tr:hover {
 }
 
 .mts_hover_list {
-	visibility: hidden;
+	display: none;
 	border: gray solid 1px;
 	position: absolute;
 	z-index: 100;
@@ -25,7 +25,7 @@ tr:hover {
 }
 
 td:hover .mts_hover_list {
-	visibility: visible;
+	display: block;
 }
 
 .mts_hover_list_text, .mts_tooltip {

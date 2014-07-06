@@ -107,10 +107,12 @@ def announce():
 	else:
 		server["clients_top"] = server["clients"]
 
-	# Make sure that startup options don't change
+	# Make sure that startup options are saved
 	if server["action"] != "start":
-		if "mods" in old:
-			server["mods"] = old["mods"]
+		for field in ("dedicated", "rollback", "mapgen", "privs",
+				"can_see_far_names", "mods"):
+			if field in old:
+				server[field] = old[field]
 
 	# Popularity
 	if old:

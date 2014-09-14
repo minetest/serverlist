@@ -4,7 +4,7 @@
 #DEBUG = True
 
 # Address for development server to listen on
-#HOST = "0.0.0.0"
+#HOST = "127.0.0.1"
 # Port for development server to listen on
 #PORT = 5000
 

@@ -6,16 +6,13 @@ from operator import itemgetter
 from apscheduler.scheduler import Scheduler
 from flask import Flask, request, send_from_directory
 
-serverList = []
-maxServers = 0
-maxClients = 0
-listLock = RLock()
 
 sched = Scheduler()
 sched.start()
 
 app = Flask(__name__, static_url_path = "")
 app.config.from_pyfile("config.py")
+
 
 @app.route("/")
 def index():
@@ -71,13 +68,13 @@ def announce():
 		server["port"] = int(server["port"])
 	#### End compatability code ####
 
-	old = getServer(server["ip"], server["port"])
+	old = serverList.get(server["ip"], server["port"])
 
 	if server["action"] == "delete":
 		if not old:
 			return "Server not found.", 500
-		removeServer(old)
-		saveList()
+		serverList.remove(old)
+		serverList.save()
 		return "Removed from server list."
 	elif not checkRequest(server):
 		return "Invalid JSON data.", 400
@@ -117,7 +114,7 @@ def announce():
 	# Popularity
 	if old:
 		server["updates"] = old["updates"] + 1
-		# This is actally a count of all the client numbers we've received,
+		# This is actually a count of all the client numbers we've received,
 		# it includes clients that were on in the previous update.
 		server["total_clients"] = old["total_clients"] + server["clients"]
 	else:
@@ -128,6 +125,11 @@ def announce():
 	finishRequestAsync(server)
 
 	return "Thanks, your request has been filed.", 202
+
+
+@sched.interval_schedule(minutes=1, coalesce=True, max_instances=1)
+def purgeOld():
+	serverList.purgeOld()
 
 
 # Returns ping time in seconds (up), False (down), or None (error).
@@ -151,75 +153,6 @@ def serverUp(address, port):
 		return False
 	except:
 		return None
-
-
-def getServerAndIndex(ip, port):
-	with listLock:
-		for i, server in enumerate(serverList):
-			if server["ip"] == ip and server["port"] == port:
-				return (i, server)
-
-
-def getServer(ip, port):
-	server = getServerAndIndex(ip, port)
-	return server and server[1]
-
-
-def removeServer(server):
-	with listLock:
-		try:
-			serverList.remove(server)
-		except:
-			pass
-
-
-def sortList():
-	with listLock:
-		serverList.sort(key=itemgetter("clients", "start"), reverse=True)
-
-@sched.interval_schedule(minutes=1, coalesce=True, max_instances=1)
-def purgeOld():
-	with listLock:
-		for server in serverList:
-			if server["update_time"] < time.time() - app.config["PURGE_TIME"]:
-				serverList.remove(server)
-	saveList()
-
-
-def loadList():
-	global serverList, maxServers, maxClients
-	try:
-		with open(os.path.join("static", app.config["FILENAME"]), "r") as fd:
-			data = json.load(fd)
-	except FileNotFoundError:
-		return
-	if not data:
-		return
-	with listLock:
-		serverList = data["list"]
-		maxServers = data["total_max"]["servers"]
-		maxClients = data["total_max"]["clients"]
-
-
-def saveList():
-	global maxServers, maxClients
-	with listLock:
-		servers = len(serverList)
-		clients = 0
-		for server in serverList:
-			clients += server["clients"]
-
-		maxServers = max(servers, maxServers)
-		maxClients = max(clients, maxClients)
-
-		with open(os.path.join("static", app.config["FILENAME"]), "w") as fd:
-			json.dump({
-					"total": {"servers": servers, "clients": clients},
-					"total_max": {"servers": maxServers, "clients": maxClients},
-					"list": serverList
-				},
-				fd,
-				indent = "\t" if app.config["DEBUG"] else None)
 
 
 # fieldName: (Required, Type, SubType)
@@ -312,23 +245,102 @@ def asyncFinishThread(server):
 
 	server["ping"] = serverUp(server["address"], server["port"])
 	if not server["ping"]:
+		app.logger.warning("Server %s:%d has no ping."
+				% (server["address"], server["port"]))
 		return
 
 	del server["action"]
 
-	with listLock:
-		old = getServerAndIndex(server["ip"], server["port"])
-		if old:
-			serverList[old[0]] = server
-		else:
-			serverList.append(server)
-
-	sortList()
-	saveList()
+	serverList.update(server)
 
 
-loadList()
-purgeOld()
+class ServerList:
+	def __init__(self):
+		self.list = []
+		self.maxServers = 0
+		self.maxClients = 0
+		self.lock = RLock()
+		self.load()
+		self.purgeOld()
+
+	def getWithIndex(self, ip, port):
+		with self.lock:
+			for i, server in enumerate(self.list):
+				if server["ip"] == ip and server["port"] == port:
+					return (i, server)
+		return (None, None)
+
+	def get(self, ip, port):
+		i, server = self.getWithIndex(ip, port)
+		return server
+
+	def removeServer(self, server):
+		with lock:
+			try:
+				self.list.remove(server)
+			except:
+				pass
+
+	def sort(self):
+		with self.lock:
+			self.list.sort(key=itemgetter("clients", "start"), reverse=True)
+
+	def purgeOld(self):
+		with self.lock:
+			for server in self.list:
+				if server["update_time"] < time.time() - app.config["PURGE_TIME"]:
+					self.list.remove(server)
+		self.save()
+
+	def load(self):
+		try:
+			with open(os.path.join("static", app.config["FILENAME"]), "r") as fd:
+				data = json.load(fd)
+		except FileNotFoundError:
+			return
+
+		if not data:
+			return
+
+		with self.lock:
+			self.list = data["list"]
+			self.maxServers = data["total_max"]["servers"]
+			self.maxClients = data["total_max"]["clients"]
+
+	def save(self):
+		with self.lock:
+			servers = len(self.list)
+			clients = 0
+			for server in self.list:
+				clients += server["clients"]
+
+			self.maxServers = max(servers, self.maxServers)
+			self.maxClients = max(clients, self.maxClients)
+
+			with open(os.path.join("static", app.config["FILENAME"]), "w") as fd:
+				json.dump({
+						"total": {"servers": servers, "clients": clients},
+						"total_max": {"servers": self.maxServers, "clients": self.maxClients},
+						"list": self.list
+					},
+					fd,
+					indent = "\t" if app.config["DEBUG"] else None
+				)
+
+	def update(self, server):
+		with self.lock:
+			i, old = self.getWithIndex(server["ip"], server["port"])
+			if i is not None:
+				self.list[i] = server
+			else:
+				self.list.append(server)
+
+			self.sort()
+			self.save()
+
+serverList = ServerList()
+
 
 if __name__ == "__main__":
 	app.run(host = app.config["HOST"], port = app.config["PORT"])
+

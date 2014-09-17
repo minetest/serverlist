@@ -85,3 +85,10 @@ Setting up the server
 		$ uwsgi -s /tmp/serverlist.sock --plugin python -w server:app --enable-threads
 		$ # Then configure according to http://flask.pocoo.org/docs/deploying/uwsgi/
 
+License
+-------
+
+The Minetest master server is licensed under the GNU Lesser General Public
+License version 2.1 or later (LGPLv2.1+).  A LICENSE.txt file should have been
+supplied with your copy of this software containing a copy of the license.
+

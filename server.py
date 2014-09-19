@@ -236,10 +236,9 @@ def asyncFinishThread(server):
 				found = True
 				break
 		if not found:
-			#app.logger.warning("Invalid IP %s for address %s (address valid for %s)."
-			#		% (server["ip"], server["address"], addresses))
-			#return
-			pass
+			app.logger.warning("Invalid IP %s for address %s (address valid for %s)."
+					% (server["ip"], server["address"], addresses))
+			return
 	else:
 		server["address"] = server["ip"]
 

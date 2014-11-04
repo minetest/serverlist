@@ -274,7 +274,7 @@ class ServerList:
 		return server
 
 	def removeServer(self, server):
-		with lock:
+		with self.lock:
 			try:
 				self.list.remove(server)
 			except:

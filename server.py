@@ -135,19 +135,20 @@ def purgeOld():
 # Returns ping time in seconds (up), False (down), or None (error).
 def serverUp(address, port):
 	try:
-		start = time.time()
 		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		sock.settimeout(3)
+		sock.connect((address, port))
 		buf = b"\x4f\x45\x74\x03\x00\x00\x00\x01"
-		sock.sendto(buf, (address, port))
-		data, addr = sock.recvfrom(1000)
+		sock.send(buf)
+		start = time.time()
+		data = sock.recv(1024)
+		end = time.time()
 		if not data:
 			return False
 		peer_id = data[12:14]
 		buf = b"\x4f\x45\x74\x03" + peer_id + b"\x00\x00\x03"
-		sock.sendto(buf, (address, port))
+		sock.send(buf)
 		sock.close()
-		end = time.time()
 		return end - start
 	except socket.timeout:
 		return False

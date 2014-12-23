@@ -3,11 +3,11 @@ import os, sys, json, time, socket
 from threading import Thread, RLock
 from operator import itemgetter
 
-from apscheduler.scheduler import Scheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, send_from_directory
 
 
-sched = Scheduler()
+sched = BackgroundScheduler()
 sched.start()
 
 app = Flask(__name__, static_url_path = "")
@@ -126,11 +126,10 @@ def announce():
 
 	return "Thanks, your request has been filed.", 202
 
-
-@sched.interval_schedule(minutes=1, coalesce=True, max_instances=1)
 def purgeOld():
 	serverList.purgeOld()
 
+sched.add_job(purgeOld, "interval", seconds=60, coalesce=True, max_instances=1)
 
 # Returns ping time in seconds (up), False (down), or None (error).
 def serverUp(address, port):

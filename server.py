@@ -6,7 +6,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, send_from_directory
 
 
-sched = BackgroundScheduler()
+sched = BackgroundScheduler(timezone="UTC")
 sched.start()
 
 app = Flask(__name__, static_url_path = "")

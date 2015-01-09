@@ -296,7 +296,7 @@ class ServerList:
 			points += min(8, server["game_time"] / (60*60*24*30))
 
 			# -8 for unrealistic max_clients
-			if server["max_clients"] >= 128:
+			if server["clients_max"] >= 128:
 				points -= 8
 
 			# -8 per second of ping

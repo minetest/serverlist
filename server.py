@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os, sys, json, time, socket
 from threading import Thread, RLock
-from operator import itemgetter
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, send_from_directory
@@ -281,8 +280,38 @@ class ServerList:
 				pass
 
 	def sort(self):
+		def server_points(server):
+			points = 0
+
+			# 1 per client
+			# Only 1/16 per client with a guest or all-numeric name
+			for name in server["clients_list"]:
+				if name.startswith("Guest") or \
+						name.isdigit():
+					points += 1/16
+				else:
+					points += 1
+
+			# 1 per month of age, limited to 8
+			points += min(8, server["game_time"] / (60*60*24*30))
+
+			# -8 for unrealistic max_clients
+			if server["max_clients"] >= 128:
+				points -= 8
+
+			# -8 per second of ping
+			points -= server["ping"] * 8
+
+			# Up to -8 for less than an hour of uptime (penalty linearly decreasing)
+			HOUR_SECS = 60 * 60
+			uptime = server["uptime"]
+			if uptime < HOUR_SECS:
+				points -= ((HOUR_SECS - uptime) / HOUR_SECS) * 8
+
+			return points
+
 		with self.lock:
-			self.list.sort(key=itemgetter("clients", "start"), reverse=True)
+			self.list.sort(key=server_points, reverse=True)
 
 	def purgeOld(self):
 		with self.lock:
@@ -338,7 +367,6 @@ class ServerList:
 			self.save()
 
 serverList = ServerList()
-
 
 if __name__ == "__main__":
 	app.run(host = app.config["HOST"], port = app.config["PORT"])

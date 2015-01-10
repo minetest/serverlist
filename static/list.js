@@ -58,7 +58,7 @@ function tooltipString(str, maxLen) {
 function hoverList(name, list) {
 	if (!list || list.length == 0) return '';
 	var str = '<div class="mts_hover_list">'
-	str += name + '(' + list.length + ')<br />';
+	str += name + ' (' + list.length + ')<br />';
 	for (var i in list) {
 		str += escapeHTML(list[i]) + '<br />';
 	}
@@ -74,7 +74,7 @@ function hoverString(name, string) {
 }
 
 function draw(json) {
-	html = window.render.servers(json);
+	var html = window.render.servers(json);
 	jQuery(master.output).html(html);
 }
 

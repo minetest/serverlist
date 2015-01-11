@@ -292,15 +292,18 @@ class ServerList:
 				else:
 					points += 1
 
-			# 1 per month of age, limited to 8
-			points += min(8, server["game_time"] / (60*60*24*30))
+			# 1/2 per month of age, limited to 2
+			points += min(2, server["game_time"] / (60*60*24*30) * (1/2))
+
+			# 1/8 per average client, limited to 1
+			points += min(1, server["pop_v"] * (1/8))
 
 			# -8 for unrealistic max_clients
 			if server["clients_max"] >= 128:
 				points -= 8
 
-			# -8 per second of ping
-			points -= server["ping"] * 8
+			# -6 per second of ping
+			points -= server["ping"] * 6
 
 			# Up to -8 for less than an hour of uptime (penalty linearly decreasing)
 			HOUR_SECS = 60 * 60

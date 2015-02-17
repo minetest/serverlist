@@ -171,6 +171,9 @@ fields = {
 	"mods": (False, "list", "str"),
 
 	"version": (True, "str"),
+	"proto_min": (False, "int"),
+	"proto_max": (False, "int"),
+
 	"gameid": (True, "str"),
 	"mapgen": (False, "str"),
 	"url": (False, "str"),

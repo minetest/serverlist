@@ -130,12 +130,13 @@ def purgeOld():
 
 sched.add_job(purgeOld, "interval", seconds=60, coalesce=True, max_instances=1)
 
+
 # Returns ping time in seconds (up), False (down), or None (error).
-def serverUp(address, port):
+def serverUp(info):
 	try:
-		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		sock = socket.socket(info[0], info[1], info[2])
 		sock.settimeout(3)
-		sock.connect((address, port))
+		sock.connect(info[4])
 		buf = b"\x4f\x45\x74\x03\x00\x00\x00\x01"
 		sock.send(buf)
 		start = time.time()
@@ -225,26 +226,29 @@ def finishRequestAsync(server):
 
 
 def asyncFinishThread(server):
-	if "address" in server and server["address"] != "":
-		try:
-			info = socket.getaddrinfo(server["address"], server["port"])
-		except:
-			app.logger.warning("Unable to get address info for %s." % (server["address"],))
-			return
+	checkAddress = False
+	if not "address" in server or not server["address"]:
+		server["address"] = server["ip"]
+	else:
+		checkAddress = True
+
+	try:
+		info = socket.getaddrinfo(server["address"],
+			server["port"],
+			type=socket.SOCK_DGRAM,
+			proto=socket.SOL_UDP)
+	except socket.gaierror:
+		app.logger.warning("Unable to get address info for %s." % (server["address"],))
+		return
+
+	if checkAddress:
 		addresses = set(data[4][0] for data in info)
-		found = False
-		for addr in addresses:
-			if server["ip"] == addr:
-				found = True
-				break
-		if not found:
+		if not server["ip"] in addresses:
 			app.logger.warning("Invalid IP %s for address %s (address valid for %s)."
 					% (server["ip"], server["address"], addresses))
 			return
-	else:
-		server["address"] = server["ip"]
 
-	server["ping"] = serverUp(server["address"], server["port"])
+	server["ping"] = serverUp(info[0])
 	if not server["ping"]:
 		app.logger.warning("Server %s:%d has no ping."
 				% (server["address"], server["port"]))

@@ -290,27 +290,39 @@ class ServerList:
 		def server_points(server):
 			points = 0
 
-			# 1 per client
-			# Only 1/16 per client with a guest or all-numeric name
-			for name in server["clients_list"]:
-				if name.startswith("Guest") or \
-						name.isdigit():
-					points += 1/16
-				else:
-					points += 1
+			# 1 per client, but only 1/8 per client with a guest
+			# or all-numeric name.
+			if "clients_list" in server:
+				for name in server["clients_list"]:
+					if name.startswith("Guest") or \
+							name.isdigit():
+						points += 1/8
+					else:
+						points += 1
+			else:
+				# Old server
+				points = server["clients"] / 4
 
-			# 1/2 per month of age, limited to 2
-			points += min(2, server["game_time"] / (60*60*24*30) * (1/2))
+			# Penalize highly loaded servers to improve player distribution.
+			# Note: This doesn't just make more than 16 players stop
+			# increasing your points, it can actually reduce your points
+			# if you have guests/all-numerics.
+			if server["clients"] > 16:
+				points = server["clients"] - 16
 
-			# 1/8 per average client, limited to 1
-			points += min(1, server["pop_v"] * (1/8))
+			# 1 per month of age, limited to 8
+			points += min(8, server["game_time"] / (60*60*24*30))
+
+			# 1/2 per average client, limited to 4
+			points += min(4, server["pop_v"] / 2)
 
 			# -8 for unrealistic max_clients
 			if server["clients_max"] >= 128:
 				points -= 8
 
-			# -6 per second of ping
-			points -= server["ping"] * 6
+			# -8 per second of ping over 0.4s
+			if server["ping"] > 0.4:
+				points -= (server["ping"] - 0.4) * 8
 
 			# Up to -8 for less than an hour of uptime (penalty linearly decreasing)
 			HOUR_SECS = 60 * 60

@@ -308,7 +308,7 @@ class ServerList:
 			# increasing your points, it can actually reduce your points
 			# if you have guests/all-numerics.
 			if server["clients"] > 16:
-				points = server["clients"] - 16
+				points -= server["clients"] - 16
 
 			# 1 per month of age, limited to 8
 			points += min(8, server["game_time"] / (60*60*24*30))

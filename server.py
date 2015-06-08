@@ -279,7 +279,7 @@ class ServerList:
 		i, server = self.getWithIndex(ip, port)
 		return server
 
-	def removeServer(self, server):
+	def remove(self, server):
 		with self.lock:
 			try:
 				self.list.remove(server)

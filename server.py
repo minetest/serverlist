@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, sys, json, time, socket
+import os, sys, json, time, socket, datetime
 from threading import Thread, RLock
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -318,6 +318,12 @@ class ServerList:
 
 			# -8 for unrealistic max_clients
 			if server["clients_max"] >= 128:
+				points -= 8
+
+			# -8 for unrealistic game time
+			before = datetime.datetime(2011, 01, 01)
+			now = datetime.datetime.now()
+			if server["game_time"] / (60*60*24) >= (now - before).days:
 				points -= 8
 
 			# -8 per second of ping over 0.4s

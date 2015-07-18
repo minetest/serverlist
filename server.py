@@ -35,10 +35,7 @@ def announce():
 	if ip in app.config["BANLIST"]:
 		return "Banned.", 403
 
-	if request.method == "POST":
-		data = request.form["json"]
-	else:
-		data = request.args["json"]
+	data = request.form["json"] if request.method == "POST" else request.args["json"]
 
 	if len(data) > 5000:
 		return "JSON data is too big.", 413
@@ -90,18 +87,12 @@ def announce():
 
 	server["update_time"] = time.time()
 
-	if server["action"] == "start":
-		server["start"] = time.time()
-	else:
-		server["start"] = old["start"]
+	server["start"] = time.time() if server["action"] == "start" else old["start"]
 
 	if "clients_list" in server:
 		server["clients"] = len(server["clients_list"])
 
-	if old:
-		server["clients_top"] = max(server["clients"], old["clients_top"])
-	else:
-		server["clients_top"] = server["clients"]
+	server["clients_top"] = max(server["clients"], old["clients_top"]) if old else server["clients"]
 
 	# Make sure that startup options are saved
 	if server["action"] != "start":

@@ -62,10 +62,10 @@ Setting up the server
 		# # OR:
 		# apt-get install python3 python3-pip
 
-  2. Install Flask, and APScheduler:
+  2. Install required Python packages:
 
 		# # You might have to use pip3 if your system defaults to Python 2
-		# pip install APScheduler flask
+		# pip install -r requirements.txt
 
   3. If using in production, install uwsgi and it's python plugin:
 

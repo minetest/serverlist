@@ -85,6 +85,17 @@ Setting up the server
 		$ uwsgi -s /tmp/serverlist.sock --plugin python -w server:app --enable-threads
 		$ # Then configure according to http://flask.pocoo.org/docs/deploying/uwsgi/
 
+  7. (optional) Configure the proxy server, if any.  You should make the server
+	load static files directly from the static directory.  Also, `/list`
+	should be served from `list.json`.  Example for nginx:
+
+		root /path/to/server/static;
+		rewrite ^/list$ /list.json;
+		try_files $uri @uwsgi;
+		location @uwsgi {
+			uwsgi_pass ...;
+		}
+
 License
 -------
 

@@ -36,9 +36,6 @@ def announce():
 	if ip.startswith("::ffff:"):
 		ip = ip[7:]
 
-	if ip in app.config["BANLIST"]:
-		return "Banned.", 403
-
 	data = request.form["json"] if request.method == "POST" else request.args["json"]
 
 	if len(data) > 5000:

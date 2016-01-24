@@ -16,9 +16,6 @@ FILENAME = "list.json"
 # only announce once every 5 minutes, so this should be more than 300.
 PURGE_TIME = 350
 
-# List of banned IP addresses
-BANLIST = []
-
 # Creates server entries if a server sends an 'update' and there is no entry yet.
 # This should only be used to populate the server list after list.json was deleted.
 # This WILL cause problems such as mapgen, mods and privilege information missing from the list

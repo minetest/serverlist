@@ -1,16 +1,12 @@
 
 # Enables detailed tracebacks and an interactive Python console on errors.
 # Never use in production!
-#DEBUG = True
+DEBUG = False
 
 # Address for development server to listen on
-#HOST = "127.0.0.1"
+HOST = "127.0.0.1"
 # Port for development server to listen on
-#PORT = 5000
-
-# Makes the server more performant at sending static files when the
-# server is being proxied by a server that supports X-Sendfile.
-#USE_X_SENDFILE = True
+PORT = 5000
 
 # File to store the JSON server list data in.
 FILENAME = "list.json"

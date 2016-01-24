@@ -75,8 +75,8 @@ Setting up the server
 		# # OR:
 		# pip install uwsgi
 
-  4. Configure the server by changing options in config.py, which is a Flask
-	configuration file.
+  4. Configure the server by adding options to `config.py`.
+       See `config-example.py` for defaults.
 
   5. Start the server:
 

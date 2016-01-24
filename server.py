@@ -6,6 +6,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, send_from_directory
 
 
+# Set up scheduler
 sched = BackgroundScheduler(timezone="UTC")
 sched.start()
 
@@ -16,6 +17,8 @@ app.config.from_pyfile("config-example.py")  # Use example for defaults
 if os.path.isfile(os.path.join(app.root_path, "config.py")):
         app.config.from_pyfile("config.py")
 
+
+# Views
 
 @app.route("/")
 def index():
@@ -36,7 +39,7 @@ def announce():
 	if ip.startswith("::ffff:"):
 		ip = ip[7:]
 
-	data = request.form["json"] if request.method == "POST" else request.args["json"]
+	data = request.values["json"]
 
 	if len(data) > 5000:
 		return "JSON data is too big.", 413
@@ -52,7 +55,11 @@ def announce():
 	if not "action" in server:
 		return "Missing action field.", 400
 
-	if server["action"] == "start":
+	action = server["action"]
+	if action not in ("start", "update", "delete"):
+		return "Invalid action field.", 400
+
+	if action == "start":
 		server["uptime"] = 0
 
 	server["ip"] = ip
@@ -65,9 +72,9 @@ def announce():
 		server["port"] = int(server["port"])
 	#### End compatability code ####
 
-	old = serverList.get(server["ip"], server["port"])
+	old = serverList.get(ip, server["port"])
 
-	if server["action"] == "delete":
+	if action == "delete":
 		if not old:
 			return "Server not found.", 500
 		serverList.remove(old)
@@ -76,7 +83,7 @@ def announce():
 	elif not checkRequest(server):
 		return "Invalid JSON data.", 400
 
-	if server["action"] != "start" and not old:
+	if action == "update" and not old:
 		if app.config["ALLOW_UPDATE_WITHOUT_OLD"]:
 			old = server
 			old["start"] = time.time()
@@ -88,7 +95,7 @@ def announce():
 
 	server["update_time"] = time.time()
 
-	server["start"] = time.time() if server["action"] == "start" else old["start"]
+	server["start"] = time.time() if action == "start" else old["start"]
 
 	if "clients_list" in server:
 		server["clients"] = len(server["clients_list"])
@@ -96,7 +103,7 @@ def announce():
 	server["clients_top"] = max(server["clients"], old["clients_top"]) if old else server["clients"]
 
 	# Make sure that startup options are saved
-	if server["action"] != "start":
+	if action == "update":
 		for field in ("dedicated", "rollback", "mapgen", "privs",
 				"can_see_far_names", "mods"):
 			if field in old:
@@ -117,11 +124,10 @@ def announce():
 
 	return "Thanks, your request has been filed.", 202
 
-def purgeOld():
-	serverList.purgeOld()
+sched.add_job(lambda: serverList.purgeOld(), "interval",
+		seconds=60, coalesce=True, max_instances=1)
 
-sched.add_job(purgeOld, "interval", seconds=60, coalesce=True, max_instances=1)
-
+# Utilities
 
 # Returns ping time in seconds (up), False (down), or None (error).
 def serverUp(info):
@@ -194,7 +200,7 @@ def checkRequest(server):
 		# Accept strings in boolean fields but convert it to a
 		# boolean, because old servers sent some booleans as strings.
 		if data[1] == "bool" and type(server[name]).__name__ == "str":
-			server[name] = True if server[name].lower() in ["true", "1"] else False
+			server[name] = True if server[name].lower() in ("true", "1") else False
 			continue
 		# clients_max was sent as a string instead of an integer
 		if name == "clients_max" and type(server[name]).__name__ == "str":

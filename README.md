@@ -5,7 +5,7 @@ Setting up the webpage
 ----------------------
 
 You will have to install node.js, doT.js and their dependencies to compile
-the serverlist webpage template.
+the server list webpage template.
 
 First install node.js, e.g.:
 
@@ -82,7 +82,7 @@ Setting up the server
 
 		$ ./server.py
 		$ # Or for production:
-		$ uwsgi -s /tmp/serverlist.sock --plugin python -w server:app --enable-threads
+		$ uwsgi -s /tmp/minetest-master.sock --plugin python -w server:app --enable-threads
 		$ # Then configure according to http://flask.pocoo.org/docs/deploying/uwsgi/
 
   7. (optional) Configure the proxy server, if any.  You should make the server

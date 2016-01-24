@@ -8,9 +8,6 @@ HOST = "127.0.0.1"
 # Port for development server to listen on
 PORT = 5000
 
-# File to store the JSON server list data in.
-FILENAME = "list.json"
-
 # Amount of time, is seconds, after which servers are removed from the list
 # if they haven't updated their listings.  Note: By default Minetest servers
 # only announce once every 5 minutes, so this should be more than 300.

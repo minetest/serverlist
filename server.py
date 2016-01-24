@@ -26,7 +26,7 @@ def index():
 def list():
 	# We have to make sure that the list isn't cached,
 	# since the list isn't really static.
-	return send_from_directory(app.static_folder, app.config["FILENAME"],
+	return send_from_directory(app.static_folder, "list.json",
 			cache_timeout=0)
 
 
@@ -336,7 +336,7 @@ class ServerList:
 
 	def load(self):
 		try:
-			with open(os.path.join("static", app.config["FILENAME"]), "r") as fd:
+			with open(os.path.join("static", "list.json"), "r") as fd:
 				data = json.load(fd)
 		except FileNotFoundError:
 			return
@@ -359,7 +359,7 @@ class ServerList:
 			self.maxServers = max(servers, self.maxServers)
 			self.maxClients = max(clients, self.maxClients)
 
-			with open(os.path.join("static", app.config["FILENAME"]), "w") as fd:
+			with open(os.path.join("static", "list.json"), "w") as fd:
 				json.dump({
 						"total": {"servers": servers, "clients": clients},
 						"total_max": {"servers": self.maxServers, "clients": self.maxClients},

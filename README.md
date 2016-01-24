@@ -75,10 +75,14 @@ Setting up the server
 		# # OR:
 		# pip install uwsgi
 
-  4. Configure the server by adding options to `config.py`.
-       See `config-example.py` for defaults.
+  4. Install, start, and enable MongoDB on boot:
 
-  5. Start the server:
+		# pacman -S mongodb && systemctl enable mongodb --now
+
+  5. Configure the server by adding options to `config.py`.
+	See `config-example.py` for defaults.
+
+  6. Start the server:
 
 		$ ./server.py
 		$ # Or for production:

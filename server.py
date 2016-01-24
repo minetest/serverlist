@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import os, sys, json, time, socket
-from threading import Thread, RLock
+from datetime import date, datetime, timedelta
+from threading import Thread
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, send_from_directory
+from flask.ext.pymongo import PyMongo, ASCENDING, DESCENDING
 
 
 # Set up scheduler
@@ -16,6 +18,9 @@ app = Flask(__name__, static_url_path = "")
 app.config.from_pyfile("config-example.py")  # Use example for defaults
 if os.path.isfile(os.path.join(app.root_path, "config.py")):
         app.config.from_pyfile("config.py")
+
+# Set up database
+mongo = PyMongo(app)
 
 
 # Views
@@ -59,9 +64,6 @@ def announce():
 	if action not in ("start", "update", "delete"):
 		return "Invalid action field.", 400
 
-	if action == "start":
-		server["uptime"] = 0
-
 	server["ip"] = ip
 
 	if not "port" in server:
@@ -93,8 +95,9 @@ def announce():
 		else:
 			return "Server to update not found.", 500
 
-	server["update_time"] = time.time()
+	server["last_update"] = datetime.utcnow()
 
+	del server["uptime"]
 	server["start"] = time.time() if action == "start" else old["start"]
 
 	if "clients_list" in server:
@@ -109,23 +112,49 @@ def announce():
 			if field in old:
 				server[field] = old[field]
 
-	# Popularity
-	if old:
-		server["updates"] = old["updates"] + 1
-		# This is actually a count of all the client numbers we've received,
-		# it includes clients that were on in the previous update.
-		server["total_clients"] = old["total_clients"] + server["clients"]
+	## Popularity
+	# This should only include stats from the past few days, so storing
+	# the necessary data is fairly complicated.  Three pieces of
+	# information are required: the time the server's been connected
+	# (number of updates), the number of clients reported, and a
+	# timestamp so that this information can expire.  This is stored in
+	# the format {date: (updates, clients)}.
+	total_updates = 1
+	# This is the total of all the client numbers we've received,
+	# it includes clients that were on in previous updates.
+	total_clients = server["clients"]
+	today = date.today()
+	# Key must be a string
+	today_key = str(today.toordinal())
+	if old and type(old["updates"]) == dict:
+		server["updates"] = {}
+		updates = server["updates"]
+		# Copy over only recent updates, and set the total counter
+		pop_days = app.config["POP_DAYS"]
+		for d, data in old["updates"].items():
+			if date.fromordinal(int(d)) >= \
+					today - timedelta(days=pop_days):
+				updates[d] = data
+				total_updates += data[0]
+				total_clients += data[1]
+
+		if today_key in updates:
+			updates[today_key][0] += 1
+			updates[today_key][1] += server["clients"]
+		else:
+			updates[today_key] = (1, server["clients"])
 	else:
-		server["updates"] = 1
-		server["total_clients"] = server["clients"]
-	server["pop_v"] = server["total_clients"] / server["updates"]
+		server["updates"] = {today_key: (1, server["clients"])}
+	server["pop_v"] = total_clients / total_updates
+
+	# Keep server record ID
+	if old:
+		server["_id"] = old["_id"]
 
 	finishRequestAsync(server)
 
 	return "Thanks, your request has been filed.", 202
 
-sched.add_job(lambda: serverList.purgeOld(), "interval",
-		seconds=60, coalesce=True, max_instances=1)
 
 # Utilities
 
@@ -162,7 +191,6 @@ fields = {
 
 	"clients": (True, "int"),
 	"clients_max": (True, "int"),
-	"uptime": (True, "int"),
 	"game_time": (True, "int"),
 	"lag": (False, "float"),
 
@@ -213,6 +241,8 @@ def checkRequest(server):
 			for item in server[name]:
 				if type(item).__name__ != data[2]:
 					return False
+	if "_id" in server:
+		return False
 	return True
 
 
@@ -254,140 +284,145 @@ def asyncFinishThread(server):
 
 	del server["action"]
 
-	serverList.update(server)
+	with app.app_context():
+		serverList.updateServer(server)
 
 
 class ServerList:
 	def __init__(self):
-		self.list = []
-		self.maxServers = 0
-		self.maxClients = 0
-		self.lock = RLock()
-		self.load()
-		self.purgeOld()
+		self.last_cache_update = 0
+		with app.app_context():
+			mongo.db.meta.create_index("key", unique=True, name="key")
+			self.info = mongo.db.meta.find_one({"key": "list_info"}) or {}
 
-	def getWithIndex(self, ip, port):
-		with self.lock:
-			for i, server in enumerate(self.list):
-				if server["ip"] == ip and server["port"] == port:
-					return (i, server)
-		return (None, None)
+			mongo.db.servers.create_index([("ip", ASCENDING), ("port", ASCENDING)],
+				unique=True,
+				name="address")
+			mongo.db.servers.create_index("points", name="points")
+			mongo.db.servers.create_index("last_update",
+				expireAfterSeconds=app.config["PURGE_TIME"].total_seconds(),
+				name="expiration")
+
+		if "max_servers" not in self.info:
+			self.info["max_servers"] = 0
+		if "max_clients" not in self.info:
+			self.info["max_clients"] = 0
+
+	def __del__(self):
+		with app.app_context():
+			self.updateMeta()
+
+	def getPoints(self, server):
+		points = 0
+
+		# 1 per client without a guest or all-numeric name.
+		if "clients_list" in server:
+			for name in server["clients_list"]:
+				if not name.startswith("Guest") and \
+						not name.isdigit():
+					points += 1
+		else:
+			# Old server
+			points = server["clients"] / 4
+
+		# Penalize highly loaded servers to improve player distribution.
+		# Note: This doesn't just make more than 16 players stop
+		# increasing your points, it can actually reduce your points
+		# if you have guests/all-numerics.
+		if server["clients"] > 16:
+			points -= server["clients"] - 16
+
+		# 1 per month of age, limited to 8
+		points += min(8, server["game_time"] / (60*60*24*30))
+
+		# 1/2 per average client, limited to 4
+		points += min(4, server["pop_v"] / 2)
+
+		# -8 for unrealistic max_clients
+		if server["clients_max"] >= 128:
+			points -= 8
+
+		# -8 per second of ping over 0.4s
+		if server["ping"] > 0.4:
+			points -= (server["ping"] - 0.4) * 8
+
+		# Up to -8 for less than an hour of uptime (penalty linearly decreasing)
+		HOUR_SECS = 60 * 60
+		uptime = server["uptime"]
+		if uptime < HOUR_SECS:
+			points -= ((HOUR_SECS - uptime) / HOUR_SECS) * 8
+
+		return points
+
+	def updateCache(self):
+		servers = mongo.db.servers.find({"last_update":
+				{"$gt": datetime.utcnow() - app.config["UPDATE_TIME"]}
+			}).sort("points", DESCENDING)
+		server_list = []
+		num_clients = 0
+		for server in servers:
+			del server["_id"]
+			del server["last_update"]
+			del server["updates"]
+			server["uptime"] = time.time() - server["start"]
+			server_list.append(server)
+			num_clients += server["clients"]
+
+		info = self.info
+		info["max_servers"] = max(len(server_list), info["max_servers"])
+		info["max_clients"] = max(num_clients, info["max_clients"])
+
+		with open(os.path.join("static", "list.json"), "w") as fd:
+			json.dump({
+					"total": {"servers": len(server_list), "clients": num_clients},
+					"total_max": {"servers": info["max_servers"], "clients": info["max_clients"]},
+					"list": server_list
+				},
+				fd,
+				indent = "\t" if app.config["DEBUG"] else None
+			)
+
+		self.updateMeta()
+
+		self.last_cache_update = time.time()
+
+	# Update if servers are likely to have expired
+	def updateCacheIfNeeded(self):
+		if time.time() - self.last_cache_update < \
+				app.config["UPDATE_TIME"].total_seconds() / 2:
+			return
+		with app.app_context():
+			self.updateCache()
+
+	def updateMeta(self):
+		if not "key" in self.info:
+			self.info["key"] = "list_info"
+		mongo.db.meta.replace_one({"key": "list_info"},
+			self.info, upsert=True)
 
 	def get(self, ip, port):
-		i, server = self.getWithIndex(ip, port)
-		return server
+		return mongo.db.servers.find_one({"ip": ip, "port": port})
 
 	def remove(self, server):
-		with self.lock:
-			try:
-				self.list.remove(server)
-			except:
-				pass
+		mongo.db.servers.delete_one({"_id": server["_id"]})
+		self.updateCache()
 
-	def sort(self):
-		def server_points(server):
-			points = 0
-
-			# 1 per client, but only 1/8 per client with a guest
-			# or all-numeric name.
-			if "clients_list" in server:
-				for name in server["clients_list"]:
-					if name.startswith("Guest") or \
-							name.isdigit():
-						points += 1/8
-					else:
-						points += 1
-			else:
-				# Old server
-				points = server["clients"] / 4
-
-			# Penalize highly loaded servers to improve player distribution.
-			# Note: This doesn't just make more than 16 players stop
-			# increasing your points, it can actually reduce your points
-			# if you have guests/all-numerics.
-			if server["clients"] > 16:
-				points -= server["clients"] - 16
-
-			# 1 per month of age, limited to 8
-			points += min(8, server["game_time"] / (60*60*24*30))
-
-			# 1/2 per average client, limited to 4
-			points += min(4, server["pop_v"] / 2)
-
-			# -8 for unrealistic max_clients
-			if server["clients_max"] >= 128:
-				points -= 8
-
-			# -8 per second of ping over 0.4s
-			if server["ping"] > 0.4:
-				points -= (server["ping"] - 0.4) * 8
-
-			# Up to -8 for less than an hour of uptime (penalty linearly decreasing)
-			HOUR_SECS = 60 * 60
-			uptime = server["uptime"]
-			if uptime < HOUR_SECS:
-				points -= ((HOUR_SECS - uptime) / HOUR_SECS) * 8
-
-			return points
-
-		with self.lock:
-			self.list.sort(key=server_points, reverse=True)
-
-	def purgeOld(self):
-		with self.lock:
-			for server in self.list:
-				if server["update_time"] < time.time() - app.config["PURGE_TIME"]:
-					self.list.remove(server)
-		self.save()
-
-	def load(self):
-		try:
-			with open(os.path.join("static", "list.json"), "r") as fd:
-				data = json.load(fd)
-		except FileNotFoundError:
-			return
-
-		if not data:
-			return
-
-		with self.lock:
-			self.list = data["list"]
-			self.maxServers = data["total_max"]["servers"]
-			self.maxClients = data["total_max"]["clients"]
-
-	def save(self):
-		with self.lock:
-			servers = len(self.list)
-			clients = 0
-			for server in self.list:
-				clients += server["clients"]
-
-			self.maxServers = max(servers, self.maxServers)
-			self.maxClients = max(clients, self.maxClients)
-
-			with open(os.path.join("static", "list.json"), "w") as fd:
-				json.dump({
-						"total": {"servers": servers, "clients": clients},
-						"total_max": {"servers": self.maxServers, "clients": self.maxClients},
-						"list": self.list
-					},
-					fd,
-					indent = "\t" if app.config["DEBUG"] else None
-				)
-
-	def update(self, server):
-		with self.lock:
-			i, old = self.getWithIndex(server["ip"], server["port"])
-			if i is not None:
-				self.list[i] = server
-			else:
-				self.list.append(server)
-
-			self.sort()
-			self.save()
+	def updateServer(self, server):
+		server["points"] = self.getPoints(server)
+		if "_id" in server:
+			mongo.db.servers.replace_one({"_id": server["_id"]},
+					server)
+		else:
+			mongo.db.servers.insert_one(server)
+		self.updateCache()
 
 serverList = ServerList()
 
+sched.add_job(serverList.updateCacheIfNeeded, "interval",
+		seconds=app.config["UPDATE_TIME"].total_seconds() / 2, coalesce=True,
+		max_instances=1)
+
 if __name__ == "__main__":
+	serverList.updateCacheIfNeeded()
 	app.run(host = app.config["HOST"], port = app.config["PORT"])
 

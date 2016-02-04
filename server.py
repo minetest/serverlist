@@ -365,7 +365,8 @@ class ServerList:
 			self.maxServers = max(servers, self.maxServers)
 			self.maxClients = max(clients, self.maxClients)
 
-			with open(os.path.join("static", "list.json"), "w") as fd:
+			list_path = os.path.join(app.root_path, app.static_folder, "list.json")
+			with open(list_path + "~", "w") as fd:
 				json.dump({
 						"total": {"servers": servers, "clients": clients},
 						"total_max": {"servers": self.maxServers, "clients": self.maxClients},
@@ -374,6 +375,7 @@ class ServerList:
 					fd,
 					indent = "\t" if app.config["DEBUG"] else None
 				)
+			os.rename(list_path + "~", list_path)
 
 	def update(self, server):
 		with self.lock:

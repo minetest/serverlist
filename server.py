@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, sys, json, time, socket
+import os, re, sys, json, time, socket
 from threading import Thread, RLock
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -288,12 +288,10 @@ class ServerList:
 		def server_points(server):
 			points = 0
 
-			# 1 per client, but only 1/8 per client with a guest
-			# or all-numeric name.
+			# 1 per client, but only 1/8 per "guest" client
 			if "clients_list" in server:
 				for name in server["clients_list"]:
-					if name.startswith("Guest") or \
-							name.isdigit():
+					if re.match(r"[A-Z][a-z]+[0-9]{3,4}", name):
 						points += 1/8
 					else:
 						points += 1
@@ -304,7 +302,7 @@ class ServerList:
 			# Penalize highly loaded servers to improve player distribution.
 			# Note: This doesn't just make more than 16 players stop
 			# increasing your points, it can actually reduce your points
-			# if you have guests/all-numerics.
+			# if you have guests.
 			if server["clients"] > 16:
 				points -= server["clients"] - 16
 

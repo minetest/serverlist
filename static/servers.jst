@@ -8,7 +8,7 @@
 	<thead><tr>
 		{{? !master.no_address}}<th>Address[:Port]</th>{{?}}
 		{{? !master.no_clients}}<th>Players / Max{{? !master.no_avgtop}}<br/>Average / Top{{?}}</th>{{?}}
-		{{? !master.no_version}}<th>Version, Subgame, Mapgenerator</th>{{?}}
+		{{? !master.no_version}}<th>Version, Subgame[, Mapgen]</th>{{?}}
 		{{? !master.no_name}}<th>Name</th>{{?}}
 		{{? !master.no_description}}<th>Description</th>{{?}}
 		{{? !master.no_flags}}<th>Flags</th>{{?}}
@@ -26,13 +26,14 @@
 		</td>{{?}}
 		{{? !master.no_clients}}
 		<td class="clients{{? server.clients_list && server.clients_list.length > 0}} mts_hover_list_text{{?}}">
-			{{=server.clients}}/{{=server.clients_max}}{{? !master.no_avgtop}} &nbsp;&nbsp;{{=Math.floor(server.pop_v)}}/{{=server.clients_top}}{{?}}
+			{{=constantWidth(server.clients + '/' + server.clients_max, 3.4)}}
+			{{? !master.no_avgtop}} {{=constantWidth(Math.floor(server.pop_v) + '/' + server.clients_top, 3.4)}}{{?}}
 			{{=hoverList("Clients", server.clients_list)}}
 		</td>{{?}}
 		{{? !master.no_version}}
 		<td class="version{{? server.mods && server.mods.length > 0}} mts_hover_list_text{{?}}">
-			{{=escapeHTML(server.version)}}, {{=escapeHTML(server.gameid)}},&nbsp;
-			{{=escapeHTML(server.mapgen || '?')}}
+			{{=escapeHTML(server.version)}}, {{=escapeHTML(server.gameid)}}
+			{{? server.mapgen}}, {{=escapeHTML(server.mapgen)}}{{?}}
 			{{=hoverList("Mods", server.mods)}}
 		</td>{{?}}
 		{{? !master.no_name}}
@@ -51,9 +52,7 @@
 		<td class="flags {{? server.privs}} mts_hover_list_text{{?}}">
 			{{=hoverString("Privs", server.privs)}}
 			{{=server.creative ? 'Cre ' : ''}}
-			{{=server.dedicated ? 'Ded ' : ''}}
 			{{=server.damage ? 'Dmg ' : ''}}
-			{{=server.liquid_finite ? 'Liq ' : ''}}
 			{{=server.pvp ? 'PvP ' : ''}}
 			{{=server.password ? 'Pwd ' : ''}}
 			{{=server.rollback ? 'Rol ' : ''}}
@@ -61,11 +60,11 @@
 		</td>{{?}}
 		{{? !master.no_uptime}}
 		<td class="uptime">
-			{{=humanTime(server.uptime)}}, {{=humanTime(server.game_time)}}
+			{{=constantWidth(humanTime(server.uptime), 3.2)}} / {{=constantWidth(humanTime(server.game_time), 3.2)}}
 		</td>{{?}}
 		{{? !master.no_ping}}
 		<td class="ping">
-			{{=Math.floor(server.ping * 1000)}}{{? server.lag}}, {{= Math.floor(server.lag * 1000)}}{{?}}
+			{{=constantWidth(Math.floor(server.ping * 1000), 1.8)}}{{? server.lag}} / {{=constantWidth(Math.floor(server.lag * 1000), 1.8)}}{{?}}
 		</td>{{?}}
 	</tr>
 	{{~}}

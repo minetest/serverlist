@@ -20,11 +20,7 @@
 }
 
 #server_list tbody tr:nth-child(even) {
-	background-color: #EEE;
-}
-
-#server_list tbody tr:hover {
-	background-color: #CCC;
+	background-color: #F1F1F1;
 }
 
 .mts_hover_list {
@@ -41,13 +37,18 @@ td:hover .mts_hover_list {
 	display: block;
 }
 
-.mts_hover_list_text, .mts_tooltip {
-	text-decoration: underline;
-	text-decoration-style: dashed;
-}
-
 .clickable {
 	text-decoration: underline;
 	cursor: pointer;
 }
 
+.mts_tooltip {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.mts_cwidth {
+	display: inline-block;
+	text-align: center;
+}

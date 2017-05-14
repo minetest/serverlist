@@ -77,6 +77,8 @@ def announce():
 
 	if "%s/%d" % (server["ip"], server["port"]) in app.config["BANNED_SERVERS"]:
 		return "Banned (Server).", 403
+	elif "address" in server and "%s/%d" % (server["address"], server["port"]) in app.config["BANNED_SERVERS"]:
+		return "Banned (Server).", 403
 
 	old = serverList.get(ip, server["port"])
 

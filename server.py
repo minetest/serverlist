@@ -39,6 +39,9 @@ def announce():
 	if ip.startswith("::ffff:"):
 		ip = ip[7:]
 
+	if ip in app.config["BANNED_IPS"]:
+		return "Banned (IP).", 403
+
 	data = request.values["json"]
 
 	if len(data) > 5000:
@@ -71,6 +74,9 @@ def announce():
 	elif type(server["port"]) == str:
 		server["port"] = int(server["port"])
 	#### End compatability code ####
+
+	if "%s/%d" % (server["ip"], server["port"]) in app.config["BANNED_SERVERS"]:
+		return "Banned (Server).", 403
 
 	old = serverList.get(ip, server["port"])
 

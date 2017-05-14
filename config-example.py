@@ -13,6 +13,14 @@ PORT = 5000
 # only announce once every 5 minutes, so this should be more than 300.
 PURGE_TIME = 350
 
+# List of banned IP addresses for announce
+# e.g. ['2620:101::44']
+BANNED_IPS = []
+
+# List of banned servers as IP/port pairs
+# e.g. ['1.2.3.4/30000']
+BANNED_SERVERS = []
+
 # Creates server entries if a server sends an 'update' and there is no entry yet.
 # This should only be used to populate the server list after list.json was deleted.
 # This WILL cause problems such as mapgen, mods and privilege information missing from the list

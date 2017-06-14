@@ -57,44 +57,44 @@ Setting up the server
 ---------------------
 
   1. Install Python 3 and pip:
-
-		# pacman -S python python-pip
-		# # OR:
-		# apt-get install python3 python3-pip
+  
+	pacman -S python python-pip
+	# OR:
+	apt-get install python3 python3-pip
 
   2. Install required Python packages:
 
-		# # You might have to use pip3 if your system defaults to Python 2
-		# pip install -r requirements.txt
+	# You might have to use pip3 if your system defaults to Python 2
+	pip install -r requirements.txt
 
   3. If using in production, install uwsgi and it's python plugin:
 
-		# pacman -S uwsgi uwsgi-plugin-python
-		# # OR:
-		# apt-get install uwsgi uwsgi-plugin-python
-		# # OR:
-		# pip install uwsgi
+	pacman -S uwsgi uwsgi-plugin-python
+	# OR:
+	apt-get install uwsgi uwsgi-plugin-python
+	# OR:
+	pip install uwsgi
 
   4. Configure the server by adding options to `config.py`.
        See `config-example.py` for defaults.
 
   5. Start the server:
 
-		$ ./server.py
-		$ # Or for production:
-		$ uwsgi -s /tmp/minetest-master.sock --plugin python -w server:app --enable-threads
-		$ # Then configure according to http://flask.pocoo.org/docs/deploying/uwsgi/
+	$ ./server.py
+	$ # Or for production:
+	$ uwsgi -s /tmp/minetest-master.sock --plugin python -w server:app --enable-threads
+	$ # Then configure according to http://flask.pocoo.org/docs/deploying/uwsgi/
 
   7. (optional) Configure the proxy server, if any.  You should make the server
 	load static files directly from the static directory.  Also, `/list`
 	should be served from `list.json`.  Example for nginx:
 
-		root /path/to/server/static;
-		rewrite ^/list$ /list.json;
-		try_files $uri @uwsgi;
-		location @uwsgi {
-			uwsgi_pass ...;
-		}
+	root /path/to/server/static;
+	rewrite ^/list$ /list.json;
+	try_files $uri @uwsgi;
+	location @uwsgi {
+		uwsgi_pass ...;
+	}
 
 License
 -------

@@ -299,12 +299,12 @@ class ServerList:
 			# 1 per client, but only 1/8 per "guest" client
 			if "clients_list" in server:
 				for name in server["clients_list"]:
-					if re.match(r"[A-Z][a-z]+[0-9]{3,4}", name):
+					if re.match(r"[A-Z][a-z]{3,}[1-9][0-9]{2,3}", name):
 						points += 1/8
 					else:
 						points += 1
 			else:
-				# Old server
+				# Old server (1/4 per client)
 				points = server["clients"] / 4
 
 			# Penalize highly loaded servers to improve player distribution.

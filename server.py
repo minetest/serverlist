@@ -110,6 +110,11 @@ def announce():
 
 	server["clients_top"] = max(server["clients"], old["clients_top"]) if old else server["clients"]
 
+	if "url" in server:
+		url = server["url"]
+		if not any(url.startswith(p) for p in ["http://", "https://", "//"]):
+			del server["url"]
+
 	# Make sure that startup options are saved
 	if action == "update":
 		for field in ("dedicated", "rollback", "mapgen", "privs",

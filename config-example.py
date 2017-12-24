@@ -18,7 +18,7 @@ PURGE_TIME = 350
 BANNED_IPS = []
 
 # List of banned servers as host/port pairs
-# e.g. ['1.2.3.4/30000', 'evil.server.ua/30001']
+# e.g. ['1.2.3.4/30000', 'lowercase.hostname', 'lowercase.hostname/30001']
 BANNED_SERVERS = []
 
 # Creates server entries if a server sends an 'update' and there is no entry yet.

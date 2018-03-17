@@ -348,9 +348,7 @@ class ServerList:
 
 	def purgeOld(self):
 		with self.lock:
-			for server in self.list:
-				if server["update_time"] < time.time() - app.config["PURGE_TIME"]:
-					self.list.remove(server)
+			self.list = [server for server in self.list if time.time() <= server["update_time"] + app.config["PURGE_TIME"]]
 		self.save()
 
 	def load(self):

@@ -349,19 +349,19 @@ class ServerList:
 	def purgeOld(self):
 		with self.lock:
 			self.list = [server for server in self.list if time.time() <= server["update_time"] + app.config["PURGE_TIME"]]
-		self.save()
+			self.save()
 
 	def load(self):
-		try:
-			with open(os.path.join("static", "list.json"), "r") as fd:
-				data = json.load(fd)
-		except FileNotFoundError:
-			return
-
-		if not data:
-			return
-
 		with self.lock:
+			try:
+				with open(os.path.join("static", "list.json"), "r") as fd:
+					data = json.load(fd)
+			except FileNotFoundError:
+				return
+
+			if not data:
+				return
+
 			self.list = data["list"]
 			self.maxServers = data["total_max"]["servers"]
 			self.maxClients = data["total_max"]["clients"]

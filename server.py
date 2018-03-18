@@ -354,7 +354,7 @@ class ServerList:
 	def load(self):
 		with self.lock:
 			try:
-				with open(os.path.join("static", "list.json"), "r") as fd:
+				with open(os.path.join(app.static_folder, "list.json"), "r") as fd:
 					data = json.load(fd)
 			except FileNotFoundError:
 				return
@@ -376,7 +376,7 @@ class ServerList:
 			self.maxServers = max(servers, self.maxServers)
 			self.maxClients = max(clients, self.maxClients)
 
-			list_path = os.path.join(app.root_path, app.static_folder, "list.json")
+			list_path = os.path.join(app.static_folder, "list.json")
 			with open(list_path + "~", "w") as fd:
 				json.dump({
 						"total": {"servers": servers, "clients": clients},

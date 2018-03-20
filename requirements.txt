@@ -1,3 +1,2 @@
-APScheduler>=3
 Flask>=0.10
 

@@ -139,9 +139,6 @@ def announce():
 
 	return "Thanks, your request has been filed.", 202
 
-sched.add_job(lambda: serverList.purgeOld(), "interval",
-		seconds=60, coalesce=True, max_instances=1)
-
 # Utilities
 
 # Returns ping time in seconds (up), False (down), or None (error).
@@ -400,6 +397,9 @@ class ServerList:
 			self.save()
 
 serverList = ServerList()
+
+sched.add_job(lambda: serverList.purgeOld(), "interval",
+		seconds=60, coalesce=True, max_instances=1)
 
 if __name__ == "__main__":
 	app.run(host = app.config["HOST"], port = app.config["PORT"])

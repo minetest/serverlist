@@ -2,13 +2,8 @@
 import os, re, sys, json, time, socket
 from threading import Thread, RLock
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, send_from_directory
 
-
-# Set up scheduler
-sched = BackgroundScheduler(timezone="UTC")
-sched.start()
 
 app = Flask(__name__, static_url_path = "")
 
@@ -396,11 +391,18 @@ class ServerList:
 			self.sort()
 			self.save()
 
+class PurgeThread(Thread):
+	def __init__(self):
+		Thread.__init__(self)
+		self.daemon = True
+	def run(self):
+		while True:
+			time.sleep(60)
+			serverList.purgeOld()
+
 serverList = ServerList()
 
-sched.add_job(lambda: serverList.purgeOld(), "interval",
-		seconds=60, coalesce=True, max_instances=1)
+PurgeThread().start()
 
 if __name__ == "__main__":
 	app.run(host = app.config["HOST"], port = app.config["PORT"])
-

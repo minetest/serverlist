@@ -217,8 +217,9 @@ def checkRequest(server):
 		if data[1] == "bool" and type(server[name]).__name__ == "str":
 			server[name] = True if server[name].lower() in ("true", "1") else False
 			continue
-		# clients_max was sent as a string instead of an integer
-		if name == "clients_max" and type(server[name]).__name__ == "str":
+		# Accept strings in integer fields but convert it to an
+		# integer, for minetest.request_http_api interoperability.
+		if data[1] == "int" and type(server[name]).__name__ == "str":
 			server[name] = int(server[name])
 			continue
 		#### End compatibility code ####

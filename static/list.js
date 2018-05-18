@@ -81,8 +81,8 @@ function constantWidth(str, width) {
 // Code that fetches & displays the actual list
 
 function draw(json) {
-	var html = window.render.servers(json);
-	jQuery(master.output).html(html);
+	var sl = document.getElementById("server_list");
+	window.render.servers(json, sl);
 }
 
 function get() {

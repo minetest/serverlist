@@ -402,7 +402,7 @@ class ServerList:
 					fd,
 					indent = "\t" if app.config["DEBUG"] else None
 				)
-			os.rename(list_path + "~", list_path)
+			os.replace(list_path + "~", list_path)
 
 	def update(self, server):
 		with self.lock:

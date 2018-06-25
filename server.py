@@ -400,7 +400,8 @@ class ServerList:
 						"list": self.list
 					},
 					fd,
-					indent = "\t" if app.config["DEBUG"] else None
+					indent = "\t" if app.config["DEBUG"] else None,
+					separators = (', ', ': ') if app.config["DEBUG"] else (',', ':')
 				)
 			os.replace(list_path + "~", list_path)
 

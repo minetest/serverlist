@@ -331,11 +331,12 @@ class ServerList:
 				points = server["clients"] / 4
 
 			# Penalize highly loaded servers to improve player distribution.
-			# Note: This doesn't just make more than 16 players stop
+			# Note: This doesn't just make more than 90% of max players stop
 			# increasing your points, it can actually reduce your points
 			# if you have guests.
-			if server["clients"] > 16:
-				points -= server["clients"] - 16
+			cap = int(server["clients_max"] * 0.90)
+			if server["clients"] > cap:
+				points -= server["clients"] - cap
 
 			# 1 per month of age, limited to 8
 			points += min(8, server["game_time"] / (60*60*24*30))
@@ -344,7 +345,7 @@ class ServerList:
 			points += min(4, server["pop_v"] / 2)
 
 			# -8 for unrealistic max_clients
-			if server["clients_max"] >= 128:
+			if server["clients_max"] > 200:
 				points -= 8
 
 			# -8 per second of ping over 0.4s

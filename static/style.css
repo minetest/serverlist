@@ -1,7 +1,3 @@
-#server_list {
-	font-family: Roboto, Ubuntu, "Segoe UI", sans;
-}
-
 #server_list .total {
 	font-weight: bold;
 }
@@ -31,15 +27,7 @@
 	background-color: #F3F3F3;
 }
 
-#server_list a {
-	color: #336B87;
-}
-
-#server_list a:visited {
-	color: #336BA1;
-}
-
-#server_list .clients, #server_list .uptime, #server_list .ping {
+#server_list td.clients, #server_list td.uptime, #server_list td.ping {
 	text-align: center;
 }
 

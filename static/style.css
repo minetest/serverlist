@@ -1,3 +1,7 @@
+#server_list {
+	font-family: Roboto, Ubuntu, Segoe UI, sans;
+}
+
 #server_list .total {
 	font-weight: bold;
 }
@@ -12,25 +16,48 @@
 }
 
 #server_list td, #server_list th {
-	border: 1px solid gray;
+	border: 1px solid #2a3132;
+	padding: 5px;
 }
 
 #server_list thead {
-	background-color: #FFA;
+	background-color: #2a3132;
+	border-bottom: 5px solid #336B87;
+	color: white;
+	font-size: 1.1em;
 }
 
 #server_list tbody tr:nth-child(even) {
-	background-color: #F1F1F1;
+	background-color: #F3F3F3;
+}
+
+#server_list a {
+	color: #336B87;
+}
+
+#server_list a:visited {
+	color: #336Ba1;
+}
+
+#server_list .clients, #server_list .uptime, #server_list .ping {
+	text-align: center;
 }
 
 .mts_hover_list {
 	display: none;
-	border: 1px solid #88F;
-	border-radius: 4px;
-	background-color: white;
+	border: 1px solid #336B87;
+	border-radius: 10px;
+	background-color: #FAFAFA;
 	position: absolute;
 	z-index: 100;
 	padding: 0.5em;
+	box-shadow: 1px 1px 5px 3px rgba(0, 0, 0, 0.25);
+}
+
+.mts_hover_list b {
+	display: inline-block;
+	font-size: 1.1em;
+	padding-bottom: 2px;
 }
 
 td:hover .mts_hover_list {

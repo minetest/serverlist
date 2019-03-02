@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os, re, sys, json, time, socket
 from threading import Thread, RLock
+from geolite2 import geolite2
 
 from flask import Flask, request, send_from_directory
 
@@ -276,6 +277,19 @@ def asyncFinishThread(server):
 			app.logger.warning("Invalid IP %s for address %s (address valid for %s)."
 					% (server["ip"], server["address"], addresses))
 			return
+
+	reader = geolite2.reader()
+	try:
+		geo = reader.get(server["ip"])
+	except geoip2.errors.GeoIP2Error:
+		app.logger.warning("GeoIP lookup failure for %s. Is the GeoIP database installed?"
+				% (server["address"],))
+
+	if "continent" in geo and "code" in geo["continent"]:
+		server["geo_continent"] = geo["continent"]["code"]
+	else:
+		app.logger.warning("Unable to get GeoIP Continent data for %s."
+				% (server["address"],))
 
 	server["ping"] = serverUp(info[0])
 	if not server["ping"]:

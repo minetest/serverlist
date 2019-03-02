@@ -1,2 +1,2 @@
 Flask>=0.10
-
+maxminddb-geolite2>=2018.703

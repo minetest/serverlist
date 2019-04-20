@@ -1,4 +1,3 @@
-
 # Enables detailed tracebacks and an interactive Python console on errors.
 # Never use in production!
 DEBUG = False
@@ -25,4 +24,3 @@ BANNED_SERVERS = []
 # This should only be used to populate the server list after list.json was deleted.
 # This WILL cause problems such as mapgen, mods and privilege information missing from the list
 ALLOW_UPDATE_WITHOUT_OLD = False
-

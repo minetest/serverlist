@@ -39,7 +39,7 @@ def announce():
 
 	data = request.values["json"]
 
-	if len(data) > 5000:
+	if len(data) > 8192:
 		return "JSON data is too big.", 413
 
 	try:

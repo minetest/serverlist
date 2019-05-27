@@ -41,9 +41,10 @@ function addressString(server) {
 		shortStr = shortStr.substr(0, 23) + "&hellip;";
 		str += ' title="' + addrStr + '"'
 	}
+	var verStr = escapeHTML(server.version);
 	if (server.port != 30000)
 		shortStr += ':' + server.port;
-	return str + '>' + shortStr + '</span>';
+	return str + '><a href="minetest://' + shortStr + '/">' + shortStr + '</a></span>';
 }
 
 function tooltipString(str, maxLen) {

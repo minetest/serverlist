@@ -327,8 +327,11 @@ class ServerList:
 					else:
 						points += 1
 			else:
-				# Old server (1/4 per client)
-				points = server["clients"] / 4
+				for name in server["clients"]:
+					if re.match(r"[A-Z][a-z]{3,}[1-9][0-9]{2,3}", name):
+						points += 1/8
+					else:
+						points += 1
 
 			# Penalize highly loaded servers to improve player distribution.
 			# Note: This doesn't just make more than 80% of max players stop
@@ -345,12 +348,8 @@ class ServerList:
 			points += min(4, server["pop_v"] / 2)
 
 			# -8 for unrealistic max_clients
-			if server["clients_max"] > 200:
+			if server["clients_max"] > 500:
 				points -= 8
-
-			# -8 per second of ping over 0.4s
-			if server["ping"] > 0.4:
-				points -= (server["ping"] - 0.4) * 8
 
 			# Up to -8 for less than an hour of uptime (penalty linearly decreasing)
 			HOUR_SECS = 60 * 60

@@ -81,7 +81,7 @@ def announce():
 
 	if action == "delete":
 		if not old:
-			return "Server not found.", 500
+			return "Server not found."
 		serverList.remove(old)
 		serverList.save()
 		return "Removed from server list."
@@ -96,7 +96,7 @@ def announce():
 			old["updates"] = 0
 			old["total_clients"] = 0
 		else:
-			return "Server to update not found.", 500
+			return "Server to update not found."
 
 	server["update_time"] = time.time()
 
@@ -132,7 +132,7 @@ def announce():
 
 	finishRequestAsync(server)
 
-	return "Thanks, your request has been filed.", 202
+	return "Request has been filed.", 202
 
 # Utilities
 

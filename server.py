@@ -284,7 +284,7 @@ def asyncFinishThread(server):
 	except geoip2.errors.GeoIP2Error:
 		app.logger.warning("GeoIP lookup failure for %s." % (server["address"],))
 
-	if "continent" in geo and "code" in geo["continent"]:
+	if geo and "continent" in geo:
 		server["geo_continent"] = geo["continent"]["code"]
 	else:
 		app.logger.warning("Unable to get GeoIP Continent data for %s."

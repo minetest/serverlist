@@ -282,13 +282,13 @@ def asyncFinishThread(server):
 	try:
 		geo = reader.get(server["ip"])
 	except geoip2.errors.GeoIP2Error:
-		app.logger.warning("GeoIP lookup failure for %s." % (server["address"],))
+		app.logger.warning("GeoIP lookup failure for %s." % (server["ip"],))
 
 	if geo and "continent" in geo:
 		server["geo_continent"] = geo["continent"]["code"]
 	else:
 		app.logger.warning("Unable to get GeoIP Continent data for %s."
-				% (server["address"],))
+				% (server["ip"],))
 
 	server["ping"] = serverUp(info[0])
 	if not server["ping"]:

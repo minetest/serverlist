@@ -31,7 +31,7 @@
 	{{ if (tmp && (server.proto_min < tmp[0] || server.proto_max > tmp[1])) continue;}}
 	<tr>
 		{{? !master.no_address}}
-		<td class ="address">
+		<td class="address">
 			{{=addressString(server)}}
 		</td>{{?}}
 		{{? !master.no_clients}}
@@ -42,14 +42,14 @@
 		</td>{{?}}
 		{{? !master.no_version}}
 		<td class="version{{? server.mods && server.mods.length > 0}} mts_hover_list_text{{?}}">
-			{{=escapeHTML(server.version)}}, {{=escapeHTML(server.gameid)}}
-			{{? server.mapgen}}, {{=escapeHTML(server.mapgen)}}{{?}}
+			{{!server.version}}, {{!server.gameid}}
+			{{? server.mapgen}}, {{!server.mapgen}}{{?}}
 			{{=hoverList("Mods", server.mods)}}
 		</td>{{?}}
 		{{? !master.no_name}}
 		<td class="name">
 			{{? server.url}}
-				<a href="{{=escapeHTML(server.url)}}">{{=tooltipString(server.name, 25)}}</a>
+				<a href="{{!server.url}}">{{=tooltipString(server.name, 25)}}</a>
 			{{??}}
 				{{=tooltipString(server.name, 25)}}
 			{{?}}
@@ -60,7 +60,7 @@
 		</td>{{?}}
 		{{? !master.no_flags}}
 		<td class="flags {{? server.privs}} mts_hover_list_text{{?}}">
-			{{=hoverString("Privs", server.privs)}}
+			{{=hoverString("Default privileges", server.privs)}}
 			{{=server.creative ? 'Cre ' : ''}}
 			{{=server.damage ? 'Dmg ' : ''}}
 			{{=server.pvp ? 'PvP ' : ''}}
@@ -81,5 +81,5 @@
 	</tbody>
 </table>
 {{? master.min_clients || master.limit}}
-	<a class="clickable" onclick="delete master.min_clients; delete master.limit; get();">More...</a>
+	<a class="clickable" onclick="delete master.min_clients; delete master.limit; get();">Show more...</a>
 {{?}}

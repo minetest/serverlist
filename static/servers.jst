@@ -1,7 +1,15 @@
 {{? !master.no_total}}
-<div class="total">
-	Players: {{=it.total.clients}}/{{=it.total_max.clients}}&nbsp;
-	Servers: {{=it.total.servers}}/{{=it.total_max.servers}}
+<div>
+	<span class="header_total">
+		Players: {{=it.total.clients}}/{{=it.total_max.clients}}&nbsp;
+		Servers: {{=it.total.servers}}/{{=it.total_max.servers}}
+	</span>
+	{{? master.show_proto_select}}
+	, Protocol: <select class="proto_select">
+		<option value="">All</option>
+		<option value="[11,32]" {{? master.proto_range=='[11,32]'}}selected{{?}}>11-32 (Minetest 0.4)</option>
+		<option value="[37,99]" {{? master.proto_range=='[37,99]'}}selected{{?}}>37 (Minetest 5.0)</option>
+	</select>{{?}}
 </div>
 {{?}}
 <table>
@@ -19,6 +27,8 @@
 	{{~it.list :server:index}}
 	{{ if (master.limit && index + 1 > master.limit) break;}}
 	{{ if (master.min_clients && server.clients < master.min_clients) continue;}}
+	{{ var tmp = master.proto_range ? JSON.parse(master.proto_range) : null;}}
+	{{ if (tmp && (server.proto_min < tmp[0] || server.proto_max > tmp[1])) continue;}}
 	<tr>
 		{{? !master.no_address}}
 		<td class ="address">

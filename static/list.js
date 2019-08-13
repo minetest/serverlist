@@ -5,6 +5,7 @@ if (!master.output)	master.output = '#server_list';
 if (!master.list)	master.list = "list";
 if (!master.list_root)	master.list_root = master.root;
 if (!master.list_url)	master.list_url = master.list_root + master.list;
+master.cached_json = null;
 
 // Utility functions used by the templating code
 
@@ -81,12 +82,22 @@ function constantWidth(str, width) {
 // Code that fetches & displays the actual list
 
 function draw(json) {
+	if (json == null)
+		return;
+
 	var html = window.render.servers(json);
 	jQuery(master.output).html(html);
+	jQuery('.proto_select', master.output).on('change', function(e) {
+		master.proto_range = e.target.value;
+		draw(master.cached_json); // re-render
+	});
 }
 
 function get() {
-	jQuery.getJSON(master.list_url, draw);
+	jQuery.getJSON(master.list_url, function(json) {
+		master.cached_json = json;
+		draw(json);
+	});
 }
 
 function loaded(){

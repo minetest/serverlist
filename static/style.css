@@ -24,7 +24,7 @@
 }
 
 #server_list tbody tr:nth-child(even) {
-	background-color: #F3F3F3;
+	background-color: #E0E0E0;
 }
 
 #server_list td.clients, #server_list td.uptime, #server_list td.ping {

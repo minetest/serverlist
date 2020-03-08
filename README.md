@@ -23,7 +23,7 @@ Then install doT.js and its dependencies:
 And finally compile the template:
 
 	$ cd static
-	$ ~/node_modules/dot/bin/dot-packer -s . -d .
+	$ ~/node_modules/dot/bin/dot-packer -s .
 
 You can now serve the webpage by copying the files in static/ to your web root, or by [starting the master server](#setting-up-the-server).
 

@@ -96,6 +96,46 @@ Setting up the server
 		uwsgi_pass ...;
 	}
 
+Setting up the server (Apache version)
+---------------------
+
+If you wish to use Apache to host the master server, do steps 1-2, 4, above. Additionally install/enable mod_wsgi and an Apache site config like the following:
+
+	<VirtualHost *:80>
+		ServerName servers.minetest.net
+		ServerAlias servers.minetest.net
+		ServerAdmin admin@local.server
+
+		# This config assumes you have the master-server at DocumentRoot, and the static files
+		# in a folder called /static.
+		# Visitors to the server list in this config would visit http://local.server/ and
+		# apache would serve up the output from server.py. Static resources would be served
+		# from http://local.server/static.
+
+		# Where are the minetest-server files located?
+		DocumentRoot /var/games/minetest/master-server
+
+		# Where are the minetest-server static resources located?
+		Alias /static /var/games/minetest/master-server/static
+
+		# Serve up server.py at the root of the URL.
+		WSGIScriptAlias / /var/games/minetest/master-server/server.py
+
+		# The name of the function that we call when we invoke server.py
+		WSGICallableObject app
+
+		# These options are necessary to enable Daemon mode. Without this, you'll have strange behavior
+		# with servers dropping off your list! You can tweak threads as needed. See mod_wsgi documentation.
+		WSGIProcessGroup minetest-master-server
+		WSGIDaemonProcess minetest-master-server threads=2
+
+
+		<Directory /var/games/minetest/master-server>
+			Require all granted
+		</Directory>
+
+	</VirtualHost>
+
 License
 -------
 

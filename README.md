@@ -57,7 +57,7 @@ Setting up the server
 ---------------------
 
   1. Install Python 3 and pip:
-  
+
 	pacman -S python python-pip
 	# OR:
 	apt-get install python3 python3-pip
@@ -101,11 +101,6 @@ Setting up the server (Apache version)
 
 If you wish to use Apache to host the master server, do steps 1-2, 4, above. Additionally install/enable mod_wsgi and an Apache site config like the following:
 
-	<VirtualHost *:80>
-		ServerName servers.minetest.net
-		ServerAlias servers.minetest.net
-		ServerAdmin admin@local.server
-
 		# This config assumes you have the master-server at DocumentRoot, and the static files
 		# in a folder called /static.
 		# Visitors to the server list in this config would visit http://local.server/ and
@@ -142,4 +137,3 @@ License
 The Minetest master server is licensed under the GNU Lesser General Public
 License version 2.1 or later (LGPLv2.1+).  A LICENSE.txt file should have been
 supplied with your copy of this software containing a copy of the license.
-

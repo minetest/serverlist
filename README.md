@@ -101,17 +101,13 @@ Setting up the server (Apache version)
 
 If you wish to use Apache to host the master server, do steps 1-2, 4, above. Additionally install/enable mod_wsgi and an Apache site config like the following:
 
-		# This config assumes you have the master-server at DocumentRoot, and the static files
-		# in a folder called /static.
+		# This config assumes you have the master-server at DocumentRoot.
 		# Visitors to the server list in this config would visit http://local.server/ and
 		# apache would serve up the output from server.py. Static resources would be served
 		# from http://local.server/static.
 
 		# Where are the minetest-server files located?
 		DocumentRoot /var/games/minetest/master-server
-
-		# Where are the minetest-server static resources located?
-		Alias /static /var/games/minetest/master-server/static
 
 		# Serve up server.py at the root of the URL.
 		WSGIScriptAlias / /var/games/minetest/master-server/server.py

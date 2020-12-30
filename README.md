@@ -25,7 +25,7 @@ And finally compile the template:
 	$ cd static
 	$ ~/node_modules/dot/bin/dot-packer -s .
 
-You can now serve the webpage by copying the files in static/ to your web root, or by [starting the master server](#setting-up-the-server).
+You can now serve the webpage by copying the files in static/ to your web root, or by [starting the server list](#setting-up-the-server).
 
 
 Embedding the server list in a page
@@ -99,29 +99,29 @@ Setting up the server
 Setting up the server (Apache version)
 ---------------------
 
-If you wish to use Apache to host the master server, do steps 1-2, 4, above. Additionally install/enable mod_wsgi and an Apache site config like the following:
+If you wish to use Apache to host the server list, do steps 1-2, 4, above. Additionally install/enable mod_wsgi and an Apache site config like the following:
 
-		# This config assumes you have the master-server at DocumentRoot.
+		# This config assumes you have the server list at DocumentRoot.
 		# Visitors to the server list in this config would visit http://local.server/ and
 		# apache would serve up the output from server.py. Static resources would be served
 		# from http://local.server/static.
 
 		# Where are the minetest-server files located?
-		DocumentRoot /var/games/minetest/master-server
+		DocumentRoot /var/games/minetest/serverlist
 
 		# Serve up server.py at the root of the URL.
-		WSGIScriptAlias / /var/games/minetest/master-server/server.py
+		WSGIScriptAlias / /var/games/minetest/serverlist/server.py
 
 		# The name of the function that we call when we invoke server.py
 		WSGICallableObject app
 
 		# These options are necessary to enable Daemon mode. Without this, you'll have strange behavior
 		# with servers dropping off your list! You can tweak threads as needed. See mod_wsgi documentation.
-		WSGIProcessGroup minetest-master-server
-		WSGIDaemonProcess minetest-master-server threads=2
+		WSGIProcessGroup minetest-serverlist
+		WSGIDaemonProcess minetest-serverlist threads=2
 
 
-		<Directory /var/games/minetest/master-server>
+		<Directory /var/games/minetest/serverlist>
 			Require all granted
 		</Directory>
 
@@ -130,6 +130,6 @@ If you wish to use Apache to host the master server, do steps 1-2, 4, above. Add
 License
 -------
 
-The Minetest master server is licensed under the GNU Lesser General Public
+The Minetest server list code is licensed under the GNU Lesser General Public
 License version 2.1 or later (LGPLv2.1+).  A LICENSE.txt file should have been
 supplied with your copy of this software containing a copy of the license.

@@ -47,14 +47,9 @@ function addressString(server) {
 	return str + '>' + shortStr + '</span>';
 }
 
-function tooltipString(str, maxLen) {
+function tooltipString(str) {
 	str = escapeHTML(str);
-	var ret = str;
-	if (ret.length > maxLen) {
-		ret = '<div class="mts_tooltip" style="width:' + maxLen + 'ch;"';
-		ret += ' title="' + str + '">' + str + '</div>';
-	}
-	return ret;
+	return '<span title="' + str + '">' + str + '</div>';
 }
 
 function hoverList(name, list) {

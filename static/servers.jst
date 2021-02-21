@@ -16,11 +16,11 @@
 	<thead><tr>
 		{{? !master.no_address}}<th>Address[:Port]</th>{{?}}
 		{{? !master.no_clients}}<th>Players / Max{{? !master.no_avgtop}}<br/>Average / Top{{?}}</th>{{?}}
-		{{? !master.no_version}}<th>Version, Subgame[, Mapgen]</th>{{?}}
+		{{? !master.no_version}}<th class="version">Version, Subgame[, Mapgen]</th>{{?}}
 		{{? !master.no_name}}<th>Name</th>{{?}}
 		{{? !master.no_description}}<th>Description</th>{{?}}
-		{{? !master.no_flags}}<th>Flags</th>{{?}}
-		{{? !master.no_uptime}}<th>Uptime, Age</th>{{?}}
+		{{? !master.no_flags}}<th class="flags">Flags</th>{{?}}
+		{{? !master.no_uptime}}<th class="uptime">Uptime, Age</th>{{?}}
 		{{? !master.no_ping}}<th>Ping, Lag</th>{{?}}
 	</tr></thead>
 	<tbody>
@@ -49,14 +49,14 @@
 		{{? !master.no_name}}
 		<td class="name">
 			{{? server.url}}
-				<a href="{{!server.url}}">{{=tooltipString(server.name, 25)}}</a>
+				<a href="{{!server.url}}">{{=tooltipString(server.name)}}</a>
 			{{??}}
-				{{=tooltipString(server.name, 25)}}
+				{{=tooltipString(server.name)}}
 			{{?}}
 		</td>{{?}}
 		{{? !master.no_description}}
 		<td class="description">
-			{{=tooltipString(server.description, 50)}}
+			{{=tooltipString(server.description)}}
 		</td>{{?}}
 		{{? !master.no_flags}}
 		<td class="flags {{? server.privs}} mts_hover_list_text{{?}}">
@@ -81,5 +81,5 @@
 	</tbody>
 </table>
 {{? master.min_clients || master.limit}}
-	<a class="clickable" onclick="delete master.min_clients; delete master.limit; get();">Show more...</a>
+	<a href="javascript:delete master.min_clients; delete master.limit; get();">Show more...</a>
 {{?}}

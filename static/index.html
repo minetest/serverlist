@@ -13,6 +13,11 @@
 		a:visited {
 			color: #336BA1;
 		}
+		@media only screen and (max-width: 1024px) {
+			#server_list table .version, #server_list table .flags, #server_list table .uptime {
+				display: none;
+			}
+		}
 	</style>
 	<script>
 		var master = {show_proto_select: true};

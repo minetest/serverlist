@@ -14,6 +14,7 @@
 #server_list td, #server_list th {
 	border: 1px solid #2A3132;
 	padding: 5px;
+	color: inherit;
 }
 
 #server_list thead {
@@ -31,11 +32,32 @@
 	text-align: center;
 }
 
+#server_list td.version, #server_list td.name, #server_list td.description {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+/* Note: the column widths here are not exact as auto-layout is left enabled */
+
+#server_list td.address {
+	max-width: 24ch;
+}
+#server_list td.version {
+	max-width: 16ch;
+}
+#server_list td.name {
+	max-width: 32ch;
+}
+#server_list td.description {
+	max-width: 64ch;
+}
+
 .mts_hover_list {
 	display: none;
 	border: 1px solid #336B87;
 	border-radius: 10px;
-	background-color: #FAFAFA;
+	background-color: #FFF;
 	position: absolute;
 	z-index: 100;
 	padding: 0.5em;
@@ -43,27 +65,13 @@
 }
 
 .mts_hover_list b {
-	display: inline-block;
 	font-size: 1.1em;
-	padding-bottom: 2px;
 }
 
 td:hover .mts_hover_list {
 	display: block;
 }
 
-.clickable {
-	text-decoration: underline;
-	cursor: pointer;
-}
-
-.mts_tooltip {
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
-}
-
 .mts_cwidth {
 	display: inline-block;
-	text-align: center;
 }

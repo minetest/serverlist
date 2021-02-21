@@ -12,18 +12,15 @@ First install node.js, e.g.:
 	# apt-get install nodejs
 	# # OR:
 	# pacman -S nodejs
-	# # OR:
-	# emerge nodejs
 
 Then install doT.js and its dependencies:
 
-	$ cd ~
 	$ npm install dot commander mkdirp
 
 And finally compile the template:
 
 	$ cd static
-	$ ~/node_modules/dot/bin/dot-packer -s .
+	$ ../node_modules/dot/bin/dot-packer -s .
 
 You can now serve the webpage by copying the files in static/ to your web root, or by [starting the server list](#setting-up-the-server).
 

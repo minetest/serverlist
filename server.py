@@ -201,8 +201,8 @@ fields = {
 	"mods": (False, "list", "str"),
 
 	"version": (True, "str"),
-	"proto_min": (False, "int"),
-	"proto_max": (False, "int"),
+	"proto_min": (True, "int"),
+	"proto_max": (True, "int"),
 
 	"gameid": (True, "str"),
 	"mapgen": (False, "str"),
@@ -370,6 +370,10 @@ class ServerList:
 			uptime = server["uptime"]
 			if uptime < HOUR_SECS:
 				points -= ((HOUR_SECS - uptime) / HOUR_SECS) * 8
+
+			# reduction to 40% for servers that support both legacy (v4) and v5 clients
+			if server["proto_min"] <= 32 and server["proto_max"] > 36:
+				points *= 0.4
 
 			return points
 

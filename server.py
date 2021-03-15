@@ -381,9 +381,12 @@ class ServerList:
 			self.list.sort(key=server_points, reverse=True)
 
 	def purgeOld(self):
+		cutoff = int(time.time()) - app.config["PURGE_TIME"]
 		with self.lock:
-			self.list = [server for server in self.list if time.time() <= server["update_time"] + app.config["PURGE_TIME"]]
-			self.save()
+			count = len(self.list)
+			self.list = [server for server in self.list if cutoff <= server["update_time"]]
+			if len(self.list) < count:
+				self.save()
 
 	def load(self):
 		with self.lock:

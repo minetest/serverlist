@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, re, sys, json, time, socket
+import os, re, sys, json, time, socket, ipaddress
 from threading import Thread, RLock
 from geolite2 import geolite2
 
@@ -73,10 +73,15 @@ def announce():
 
 	if "%s/%d" % (server["ip"], server["port"]) in app.config["BANNED_SERVERS"]:
 		return "Banned (Server).", 403
-	elif "address" in server and "%s/%d" % (server["address"].lower(), server["port"]) in app.config["BANNED_SERVERS"]:
-		return "Banned (Server).", 403
-	elif "address" in server and server["address"].lower() in app.config["BANNED_SERVERS"]:
-		return "Banned (Server).", 403
+	elif "address" in server:
+		# Normalize address for ban checks
+		server["address"] = server["address"].lower().rstrip(".")
+		if f'{server["address"]}/{server["port"]}' in app.config["BANNED_SERVERS"] or \
+				server["address"] in app.config["BANNED_SERVERS"]:
+			return "Banned (Server).", 403
+		for domain in app.config["BANNED_DOMAINS"]:
+			if server["address"].endswith(domain):
+				return "Banned (Domain).", 403
 
 	old = serverList.get(ip, server["port"])
 
@@ -375,6 +380,16 @@ class ServerList:
 			cap = int(server["clients_max"] * 0.80)
 			if server["clients"] > cap:
 				points -= server["clients"] - cap
+
+			# 8 for servers with a reputable domain name
+			try:
+				ipaddress.ip_address(server["address"])
+			except ValueError:
+				for domain in app.config["IRREPUTABLE_DOMAINS"]:
+					if server["address"].endswith(domain):
+						break
+				else:
+					points += 8
 
 			# 1 per month of age, limited to 8
 			points += min(8, server["game_time"] / (60*60*24*30))

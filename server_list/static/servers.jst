@@ -26,15 +26,15 @@
 	<tbody>
 	{{~it.list :server:index}}
 	{{ if (master.limit && index + 1 > master.limit) break;}}
-	{{ if (master.min_clients && server.clients < master.min_clients) continue;}}
+	{{ if (master.min_clients && server.clients_list.length < master.min_clients) continue;}}
 	<tr>
 		{{? !master.no_address}}
 		<td class="address">
 			{{=addressString(server)}}
 		</td>{{?}}
 		{{? !master.no_clients}}
-		<td class="clients{{? server.clients_list && server.clients_list.length > 0}} mts_hover_list_text{{?}}">
-			{{=constantWidth(server.clients + '/' + server.clients_max, 3.4)}}
+		<td class="clients{{? server.clients_list.length > 0 }} mts_hover_list_text{{?}}">
+			{{=constantWidth(server.clients_list.length + '/' + server.clients_max, 3.4)}}
 			{{? !master.no_avgtop}} {{=constantWidth(Math.floor(server.pop_v) + '/' + server.clients_top, 3.4)}}{{?}}
 			{{=hoverList("Clients", server.clients_list)}}
 		</td>{{?}}

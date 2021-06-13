@@ -1,7 +1,11 @@
 *~
-node_modules
-__pycache__
-static/list.json
-static/servers.js
-config.py
 *.mmdb
+*.sqlite
+node_modules/
+__pycache__/
+/server_list/static/list.json
+/server_list/static/servers.js
+/config.py
+/celerybeat-schedule
+/package-lock.json
+/Pipfile.lock

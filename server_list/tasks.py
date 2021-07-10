@@ -29,23 +29,6 @@ def update_server(obj):
 	db.session.commit()
 
 
-def update_ping():
-	servers = Server.query.filter_by(online=True).all()
-
-	addresses = [(s.address, s.port) for s in servers]
-	pings = []
-
-	async def do_ping():
-		pings.extend(await ping_servers_async(addresses))
-	asyncio.run(do_ping())
-
-	for i, server in enumerate(servers):
-		if pings[i] is None:
-			server.set_offline()
-		else:
-			server.ping = pings[i]
-
-
 def update_list_json():
 	online_servers = Server.query.filter_by(online=True).all()
 	online_servers.sort(key=server_ranking, reverse=True)
@@ -77,7 +60,7 @@ def update_list_json():
 
 
 @celery.task
-def maintenance():
+def update_list():
 	cutoff = datetime.utcnow() - app.config["PURGE_TIME"]
 	expired_servers = Server.query.filter(
 			Server.online == True,
@@ -87,13 +70,32 @@ def maintenance():
 	for server in expired_servers:
 		server.set_offline()
 
-	update_ping()
-
 	update_list_json()
+
+	db.session.commit()
+
+
+@celery.task
+def update_ping():
+	servers = Server.query.filter_by(online=True).all()
+
+	addresses = [(s.address, s.port) for s in servers]
+	pings = []
+
+	async def do_ping():
+		pings.extend(await ping_servers_async(addresses))
+	asyncio.run(do_ping())
+
+	for i, server in enumerate(servers):
+		if pings[i] is None:
+			server.set_offline()
+		else:
+			server.ping = pings[i]
 
 	db.session.commit()
 
 
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-	sender.add_periodic_task(60, maintenance.s(), name='Server list maintenance')
+	sender.add_periodic_task(60, update_list.s(), name='Update server list')
+	sender.add_periodic_task(5*60, update_ping.s(), name='Update server ping')

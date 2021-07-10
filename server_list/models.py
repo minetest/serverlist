@@ -215,7 +215,7 @@ class Server(db.Model):
 			"proto_min": self.proto_min,
 			"pvp": self.pvp_enabled,
 			"rollback": self.rollback_enabled,
-			"uptime": (datetime.utcnow() - self.start_time).total_seconds(),
+			"uptime": int((datetime.utcnow() - self.start_time).total_seconds()),
 			"version": self.version,
 		}
 

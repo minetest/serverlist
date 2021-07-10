@@ -7,42 +7,48 @@ from .app import app
 from .util import get_addr_info
 
 
+# Initial packet of type ORIGINAL, with no data.
+# This should prompt the server to assign us a peer id.
+# [0] u32       protocol_id (PROTOCOL_ID)
+# [4] session_t sender_peer_id (PEER_ID_INEXISTENT)
+# [6] u8        channel
+# [7] u8        type (PACKET_TYPE_ORIGINAL)
+PING_PACKET = b"\x4f\x45\x74\x03\x00\x00\x00\x01"
+
+
+def get_ping_reply(data):
+	# [0] u32        protocol_id (PROTOCOL_ID)
+	# [4] session_t  sender_peer_id
+	# [6] u8         channel
+	# [7] u8         type (PACKET_TYPE_RELIABLE)
+	# [8] u16        sequence number
+	# [10] u8        type (PACKET_TYPE_CONTROL)
+	# [11] u8        controltype (CONTROLTYPE_SET_PEER_ID)
+	# [12] session_t peer_id_new
+	peer_id = data[12:14]
+
+	# Send packet of type CONTROL, subtype DISCO,
+	# to cleanly close our server connection.
+	# [0] u32       protocol_id (PROTOCOL_ID)
+	# [4] session_t sender_peer_id
+	# [6] u8        channel
+	# [7] u8        type (PACKET_TYPE_CONTROL)
+	# [8] u8        controltype (CONTROLTYPE_DISCO)
+	return b"\x4f\x45\x74\x03" + peer_id + b"\x00\x00\x03"
+
+
 class MinetestProtocol:
 	def connection_made(self, transport):
 		self.transport = transport
 
 	def send_original(self):
-		# Send packet of type ORIGINAL, with no data.
-		# This should prompt the server to assign us a peer id.
-		# [0] u32       protocol_id (PROTOCOL_ID)
-		# [4] session_t sender_peer_id (PEER_ID_INEXISTENT)
-		# [6] u8        channel
-		# [7] u8        type (PACKET_TYPE_ORIGINAL)
-		self.transport.sendto(b"\x4f\x45\x74\x03\x00\x00\x00\x01")
+		self.transport.sendto(PING_PACKET)
 
 		self.start = time.time()
 
 	def datagram_received(self, data, addr):
 		end = time.time()
-
-		# [0] u32        protocol_id (PROTOCOL_ID)
-		# [4] session_t  sender_peer_id
-		# [6] u8         channel
-		# [7] u8         type (PACKET_TYPE_RELIABLE)
-		# [8] u16        sequence number
-		# [10] u8        type (PACKET_TYPE_CONTROL)
-		# [11] u8        controltype (CONTROLTYPE_SET_PEER_ID)
-		# [12] session_t peer_id_new
-		peer_id = data[12:14]
-
-		# Send packet of type CONTROL, subtype DISCO,
-		# to cleanly close our server connection.
-		# [0] u32       protocol_id (PROTOCOL_ID)
-		# [4] session_t sender_peer_id
-		# [6] u8        channel
-		# [7] u8        type (PACKET_TYPE_CONTROL)
-		# [8] u8        controltype (CONTROLTYPE_DISCO)
-		self.transport.sendto(b"\x4f\x45\x74\x03" + peer_id + b"\x00\x00\x03", addr)
+		self.transport.sendto(get_ping_reply(data), addr)
 
 		self.future.set_result(end - self.start)
 		self.transport.close()
@@ -100,13 +106,7 @@ def ping_server_addresses(address, port):
 
 
 def ping_server(sock):
-	# Send packet of type ORIGINAL, with no data.
-	# This should prompt the server to assign us a peer id.
-	# [0] u32       protocol_id (PROTOCOL_ID)
-	# [4] session_t sender_peer_id (PEER_ID_INEXISTENT)
-	# [6] u8        channel
-	# [7] u8        type (PACKET_TYPE_ORIGINAL)
-	sock.send(b"\x4f\x45\x74\x03\x00\x00\x00\x01")
+	sock.send(PING_PACKET)
 
 	# Receive reliable packet of type CONTROL, subtype SET_PEER_ID,
 	# with our assigned peer id as data.
@@ -117,25 +117,7 @@ def ping_server(sock):
 	if not data:
 		return None
 
-	# [0] u32        protocol_id (PROTOCOL_ID)
-	# [4] session_t  sender_peer_id
-	# [6] u8         channel
-	# [7] u8         type (PACKET_TYPE_RELIABLE)
-	# [8] u16        sequence number
-	# [10] u8        type (PACKET_TYPE_CONTROL)
-	# [11] u8        controltype (CONTROLTYPE_SET_PEER_ID)
-	# [12] session_t peer_id_new
-	peer_id = data[12:14]
-
-	# Send packet of type CONTROL, subtype DISCO,
-	# to cleanly close our server connection.
-	# [0] u32       protocol_id (PROTOCOL_ID)
-	# [4] session_t sender_peer_id
-	# [6] u8        channel
-	# [7] u8        type (PACKET_TYPE_CONTROL)
-	# [8] u8        controltype (CONTROLTYPE_DISCO)
-	sock.send(b"\x4f\x45\x74\x03" + peer_id + b"\x00\x00\x03")
-
+	sock.send(get_ping_reply(data))
 	return end - start
 
 

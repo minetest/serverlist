@@ -85,7 +85,7 @@ async def ping_server_async(address, sock=None):
 
 
 async def ping_servers_async(addresses):
-	return await asyncio.gather(*[ping_server(a) for a in addresses])
+	return await asyncio.gather(*[ping_server_async(a) for a in addresses])
 
 
 def ping_server_addresses(address, port):

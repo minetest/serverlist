@@ -198,6 +198,7 @@ class Server(db.Model):
 		obj = {
 			"address": self.address,
 			"can_see_far_names": self.can_see_far_names,
+			"clients_list": self.clients.split("\n") if self.clients else [],
 			"clients_max": self.clients_max,
 			"clients_top": self.clients_top,
 			"creative": self.creative,
@@ -220,8 +221,6 @@ class Server(db.Model):
 		}
 
 		# Optional fields
-		if self.clients is not None:
-			obj["clients_list"] = self.clients.split("\n") if self.clients else []
 		if self.geo_continent is not None:
 			obj["geo_continent"] = self.geo_continent
 		if self.lag is not None:

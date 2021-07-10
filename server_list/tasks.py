@@ -79,14 +79,13 @@ def update_list_json():
 @celery.task
 def maintenance():
 	cutoff = datetime.utcnow() - app.config["PURGE_TIME"]
-	Server.query.filter(
+	expired_servers = Server.query.filter(
 			Server.online == True,
 			Server.last_update < cutoff
-		).update({
-			"online": False,
-			"total_uptime": Server.total_uptime + (Server.last_update - Server.start_time).total_seconds(),
-			"down_time": datetime.utcnow(),
-		})
+		)
+
+	for server in expired_servers:
+		server.set_offline()
 
 	update_ping()
 

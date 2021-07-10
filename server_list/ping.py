@@ -57,7 +57,6 @@ class MinetestProtocol:
 
 async def ping_server_async(address, sock=None):
 	loop = asyncio.get_event_loop()
-	future = loop.create_future()
 	transport, protocol = await loop.create_datagram_endpoint(
 			MinetestProtocol,
 			remote_addr=address,
@@ -66,15 +65,14 @@ async def ping_server_async(address, sock=None):
 	pings = []
 	while len(pings) < 3 and attempts - len(pings) < 3:
 		attempts += 1
-		protocol.future = future
+		protocol.future = loop.create_future()
 		try:
 			# Sleep a bit to spread requests out
 			await asyncio.sleep(random.random())
 			protocol.send_original()
-			ping = await asyncio.wait_for(asyncio.shield(future), 2)
+			ping = await asyncio.wait_for(asyncio.shield(protocol.future), 2)
 			if ping is not None:
 				pings.append(ping)
-			future = loop.create_future()
 		except asyncio.TimeoutError:
 			pass
 

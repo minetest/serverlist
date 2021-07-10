@@ -1,0 +1,5 @@
+maxminddb-geolite2>=2018.703
+Flask~=2.0
+flask-sqlalchemy~=2.0
+flask-migrate~=3.0
+celery~=5.0

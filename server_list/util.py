@@ -166,21 +166,36 @@ def server_ranking(server):
 
 	clients = server.clients.split('\n')
 
-	# 1 per client, capped to CLIENT_LIMIT or clients_max * 0.9
-	cap = min(server.clients_max * 0.9, app.config["CLIENT_LIMIT"])
-	points += min(len(clients), cap)
+	# 1 per client, but only 1/8 per "guest" client
+	for name in server["clients_list"]:
+		if re.match(r"[A-Z][a-z]{3,}[1-9][0-9]{2,3}", name):
+			points += 1/8
+		else:
+			points += 1
 
-	# 1/2 per week of age, limited to 8
-	points += min(8, (now - server.first_seen) / timedelta(weeks=2))
+	# Penalize highly loaded servers to improve player distribution.
+	# Note: This doesn't just make more than 80% of max players stop
+	# increasing your points, it can actually reduce your points
+	# if you have guests.
+	cap = int(server.clients_max * 0.80)
+	if len(clients) > cap:
+		points -= len(clients) - cap
+
+	# 1 per month of age, limited to 8
+	points += min(8, (now - server.first_seen) / timedelta(months=1))
 
 	# 1/2 per average client, limited to 4
 	points += min(4, server.popularity / 2)
 
-	# -8 per second of ping over 0.3s
-	if server.ping > 0.3:
-		points -= (server.ping - 0.3) * 8
+	# -8 for unrealistic max_clients
+	if server.clients_max > 200:
+		points -= 8
 
-	# Up to -4 for less than an hour of uptime (penalty linearly decreasing)
+	# -8 per second of ping over 0.4s
+	if server.ping > 0.4:
+		points -= (server.ping - 0.4) * 8
+
+	# Up to -8 for less than an hour of uptime (penalty linearly decreasing)
 	ONE_HOUR = timedelta(hours=1)
 	uptime = now - server.start_time
 	if uptime < ONE_HOUR:
@@ -190,7 +205,7 @@ def server_ranking(server):
 			down_too_long = (server.start_time - server.down_time) > ONE_HOUR
 
 		if down_too_long:
-			points -= ((ONE_HOUR - uptime) / ONE_HOUR) * 4
+			points -= ((ONE_HOUR - uptime) / ONE_HOUR) * 8
 
 	# Reduction to 40% for servers that support both legacy (v4) and v5 clients
 	if server.proto_min <= 32 and server.proto_max > 36:

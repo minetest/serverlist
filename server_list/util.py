@@ -1,6 +1,5 @@
 import re
 import socket
-import time
 
 from datetime import datetime, timedelta
 

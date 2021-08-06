@@ -92,13 +92,15 @@ def announce():
 	if addr_info is None:
 		return f"Failed to resolve server address {obj['address']!r}.", 400
 
+	valid = False
 	if "world_uuid" not in obj:
 		valid = verify_announce(addr_info, obj["address"], obj["ip"])
 
-		if not valid:
+		if not valid and server and server.address_verification_required:
 			return render_template("address_verification_failed.txt",
 				announce_ip=announce_ip,
 				valid_addresses=[data[4][0] for data in addr_info]), 400
+	obj["address_verified"] = valid
 
 	obj["addr_info"] = addr_info
 

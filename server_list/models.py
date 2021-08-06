@@ -102,6 +102,8 @@ class Server(db.Model):
 	rollback_enabled = db.Column(db.Boolean, nullable=False)
 	can_see_far_names = db.Column(db.Boolean, nullable=False)
 
+	address_verification_required = db.Column(db.Boolean, nullable=False, default=False)
+
 	@staticmethod
 	def find_from_json(obj):
 		try:
@@ -193,6 +195,9 @@ class Server(db.Model):
 		self.password_required = obj.get("password", False)
 
 		self.last_update = now
+
+		if obj["address_verified"]:
+			self.address_verification_required = True
 
 	def as_json(self):
 		obj = {

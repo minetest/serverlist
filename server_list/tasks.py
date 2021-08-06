@@ -1,11 +1,10 @@
-import asyncio
 import json
 import os
 from datetime import datetime
 
 from .app import app, celery, db
 from .models import Server, Stats
-from .ping import ping_servers_async, ping_server_addresses
+from .ping import ping_server_addresses
 from .util import get_geo_continent, server_ranking
 
 
@@ -75,27 +74,6 @@ def update_list():
 	db.session.commit()
 
 
-@celery.task
-def update_ping():
-	servers = Server.query.filter_by(online=True).all()
-
-	addresses = [(s.address, s.port) for s in servers]
-	pings = []
-
-	async def do_ping():
-		pings.extend(await ping_servers_async(addresses))
-	asyncio.run(do_ping())
-
-	for i, server in enumerate(servers):
-		if pings[i] is None:
-			server.set_offline()
-		else:
-			server.ping = pings[i]
-
-	db.session.commit()
-
-
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
 	sender.add_periodic_task(60, update_list.s(), name='Update server list')
-	sender.add_periodic_task(5*60, update_ping.s(), name='Update server ping')

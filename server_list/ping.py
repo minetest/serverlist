@@ -1,6 +1,4 @@
-import asyncio
 import time
-import random
 import socket
 
 from .app import app
@@ -35,61 +33,6 @@ def get_ping_reply(data):
 	# [7] u8        type (PACKET_TYPE_CONTROL)
 	# [8] u8        controltype (CONTROLTYPE_DISCO)
 	return b"\x4f\x45\x74\x03" + peer_id + b"\x00\x00\x03"
-
-
-class MinetestProtocol:
-	def connection_made(self, transport):
-		self.transport = transport
-
-	def send_original(self):
-		self.transport.sendto(PING_PACKET)
-
-		self.start = time.time()
-
-	def datagram_received(self, data, addr):
-		end = time.time()
-		self.transport.sendto(get_ping_reply(data), addr)
-
-		self.future.set_result(end - self.start)
-		self.transport.close()
-
-	def connection_lost(self, exc):
-		if not self.future.done():
-			self.future.set_result(None)
-
-	def error_received(self, exc):
-		self.future.set_result(None)
-
-
-async def ping_server_async(address, sock=None):
-	loop = asyncio.get_event_loop()
-	transport, protocol = await loop.create_datagram_endpoint(
-			MinetestProtocol,
-			remote_addr=address,
-			sock=sock)
-	attempts = 0
-	pings = []
-	while len(pings) < 3 and attempts - len(pings) < 3:
-		attempts += 1
-		protocol.future = loop.create_future()
-		try:
-			# Sleep a bit to spread requests out
-			await asyncio.sleep(random.random())
-			protocol.send_original()
-			ping = await asyncio.wait_for(asyncio.shield(protocol.future), 2)
-			if ping is not None:
-				pings.append(ping)
-		except asyncio.TimeoutError:
-			pass
-
-	if len(pings) != 0:
-		return min(pings)
-
-	return None
-
-
-async def ping_servers_async(addresses):
-	return await asyncio.gather(*[ping_server_async(a) for a in addresses])
 
 
 def ping_server_addresses(address, port):

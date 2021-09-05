@@ -8,7 +8,7 @@
 	, Protocol: <select class="proto_select">
 		<option value="">All</option>
 		<option value="[11,32]" {{? master.proto_range=='[11,32]'}}selected{{?}}>11-32 (Minetest 0.4)</option>
-		<option value="[37,99]" {{? master.proto_range=='[37,99]'}}selected{{?}}>37 (Minetest 5.0)</option>
+		<option value="[37,99]" {{? master.proto_range=='[37,99]'}}selected{{?}}>37+ (Minetest 5.x)</option>
 	</select>{{?}}
 </div>
 {{?}}
@@ -24,11 +24,9 @@
 		{{? !master.no_ping}}<th>Ping, Lag</th>{{?}}
 	</tr></thead>
 	<tbody>
-	{{ var tmp = master.proto_range ? JSON.parse(master.proto_range) : null;}}
 	{{~it.list :server:index}}
 	{{ if (master.limit && index + 1 > master.limit) break;}}
 	{{ if (master.min_clients && server.clients < master.min_clients) continue;}}
-	{{ if (tmp && (tmp[0] > server.proto_max || tmp[1] < server.proto_min)) continue;}}
 	<tr>
 		{{? !master.no_address}}
 		<td class="address">

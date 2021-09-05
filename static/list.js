@@ -80,8 +80,23 @@ function draw(json) {
 	if (json == null)
 		return;
 
+	// pre-filter by chosen protocol range
+	var tmp = master.proto_range ? JSON.parse(master.proto_range) : null;
+	if (tmp) {
+		json = {
+			list: json.list.filter(function(server) {
+				return !(tmp[0] > server.proto_max || tmp[1] < server.proto_min);
+			}),
+			total: {clients: 0},
+			total_max: {clients: "?", servers: "?"}
+		};
+		json.list.forEach(function(server) { json.total.clients += server.clients; });
+		json.total.servers = json.list.length;
+	}
+
 	var html = window.render.servers(json);
 	jQuery(master.output).html(html);
+
 	jQuery('.proto_select', master.output).on('change', function(e) {
 		master.proto_range = e.target.value;
 		draw(master.cached_json); // re-render
@@ -110,6 +125,6 @@ toast(master.root + 'style.css', master.root + 'servers.js', function() {
 	if (typeof(jQuery) != 'undefined')
 		return loaded();
 	else
-		toast('//ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js', loaded);
+		toast('//ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js', loaded);
 });
 

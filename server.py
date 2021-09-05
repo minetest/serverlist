@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, re, sys, json, time, socket
+import os, sys, json, time, socket
 from threading import Thread, RLock
 from geolite2 import geolite2
 
@@ -357,13 +357,9 @@ class ServerList:
 		def server_points(server):
 			points = 0
 
-			# 1 per client, but only 1/8 per "guest" client
+			# 1 per client
 			if "clients_list" in server:
-				for name in server["clients_list"]:
-					if re.match(r"[A-Z][a-z]{3,}[1-9][0-9]{2,3}", name):
-						points += 1/8
-					else:
-						points += 1
+				points += len(server["clients_list"])
 			else:
 				# Old server (1/4 per client)
 				points = server["clients"] / 4

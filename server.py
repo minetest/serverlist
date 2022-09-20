@@ -66,7 +66,7 @@ def geoip():
 		"continent": continent, # null on error
 	})
 	resp.cache_control.max_age = 7 * 86400
-	resp.cache_control.public = True
+	resp.cache_control.private = True
 
 	return resp
 

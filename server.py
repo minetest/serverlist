@@ -3,7 +3,7 @@ import os, sys, json, time, socket
 from threading import Thread, RLock
 from geolite2 import geolite2
 
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, send_from_directory, Response
 
 
 app = Flask(__name__, static_url_path = "")
@@ -13,6 +13,7 @@ app.config.from_pyfile("config-example.py")  # Use example for defaults
 if os.path.isfile(os.path.join(app.root_path, "config.py")):
         app.config.from_pyfile("config.py")
 
+reader = geolite2.reader()
 
 # Views
 
@@ -27,6 +28,33 @@ def list():
 	# since the list isn't really static.
 	return send_from_directory(app.static_folder, "list.json",
 			cache_timeout=0)
+
+
+@app.route("/geoip")
+def geoip():
+	def reply(continent, status):
+		json = "{\"continent\":\"%s\"}" % (continent,)
+		resp = Response(response=json, status=status)
+		resp.cache_control.max_age = 7 * 86400
+		resp.cache_control.public = True
+		return resp
+
+	ip = request.remote_addr
+
+	if ip.startswith("::ffff:"):
+		ip = ip[7:]
+	try:
+		geo = reader.get(ip)
+	except geoip2.errors.GeoIP2Error:
+		app.logger.warning("GeoIP lookup failure for %s." % (ip,))
+		return reply("unknown", 500)
+
+	if geo and "continent" in geo:
+		return reply(geo["continent"]["code"], 200)
+	else:
+		app.logger.warning("Unable to get GeoIP Continent data for %s."
+				% (ip,))
+		return reply("unknown", 200)
 
 
 @app.route("/announce", methods=["GET", "POST"])
@@ -278,7 +306,6 @@ def asyncFinishThread(server):
 					% (server["ip"], server["address"], addresses))
 			return
 
-	reader = geolite2.reader()
 	try:
 		geo = reader.get(server["ip"])
 	except geoip2.errors.GeoIP2Error:

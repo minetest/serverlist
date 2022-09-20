@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import os, sys, json, time, socket
 from threading import Thread, RLock
-from geolite2 import geolite2
+from glob import glob
 
-from flask import Flask, request, send_from_directory, Response
+import maxminddb
+from flask import Flask, request, send_from_directory, make_response
 
 
 app = Flask(__name__, static_url_path = "")
@@ -13,7 +14,34 @@ app.config.from_pyfile("config-example.py")  # Use example for defaults
 if os.path.isfile(os.path.join(app.root_path, "config.py")):
         app.config.from_pyfile("config.py")
 
-reader = geolite2.reader()
+tmp = glob(os.path.join(app.root_path, "dbip-country-lite-*.mmdb"))
+if tmp:
+	reader = maxminddb.open_database(tmp[0], maxminddb.MODE_AUTO)
+else:
+	app.logger.warning(
+		"For working GeoIP download the database from "+
+		"https://db-ip.com/db/download/ip-to-country-lite and place the "+
+		".mmdb file in the app root folder."
+	)
+	reader = None
+
+# Helpers
+
+def geoip_lookup_continent(ip):
+	if ip.startswith("::ffff:"):
+		ip = ip[7:]
+
+	if not reader:
+		return
+	try:
+		geo = reader.get(ip)
+	except geoip2.errors.GeoIP2Error:
+		return
+
+	if geo and "continent" in geo:
+		return geo["continent"]["code"]
+	else:
+		app.logger.warning("Unable to get GeoIP continent data for %s.", ip)
 
 # Views
 
@@ -32,29 +60,15 @@ def list():
 
 @app.route("/geoip")
 def geoip():
-	def reply(continent, status):
-		json = "{\"continent\":\"%s\"}" % (continent,)
-		resp = Response(response=json, status=status)
-		resp.cache_control.max_age = 7 * 86400
-		resp.cache_control.public = True
-		return resp
+	continent = geoip_lookup_continent(request.remote_addr)
 
-	ip = request.remote_addr
+	resp = make_response({
+		"continent": continent, # null on error
+	})
+	resp.cache_control.max_age = 7 * 86400
+	resp.cache_control.public = True
 
-	if ip.startswith("::ffff:"):
-		ip = ip[7:]
-	try:
-		geo = reader.get(ip)
-	except geoip2.errors.GeoIP2Error:
-		app.logger.warning("GeoIP lookup failure for %s." % (ip,))
-		return reply("unknown", 500)
-
-	if geo and "continent" in geo:
-		return reply(geo["continent"]["code"], 200)
-	else:
-		app.logger.warning("Unable to get GeoIP Continent data for %s."
-				% (ip,))
-		return reply("unknown", 200)
+	return resp
 
 
 @app.route("/announce", methods=["GET", "POST"])
@@ -306,16 +320,9 @@ def asyncFinishThread(server):
 					% (server["ip"], server["address"], addresses))
 			return
 
-	try:
-		geo = reader.get(server["ip"])
-	except geoip2.errors.GeoIP2Error:
-		app.logger.warning("GeoIP lookup failure for %s." % (server["ip"],))
-
-	if geo and "continent" in geo:
-		server["geo_continent"] = geo["continent"]["code"]
-	else:
-		app.logger.warning("Unable to get GeoIP Continent data for %s."
-				% (server["ip"],))
+	geo = geoip_lookup_continent(info[-1][4][0])
+	if geo:
+		server["geo_continent"] = geo
 
 	server["ping"] = serverUp(info[0])
 	if not server["ping"]:

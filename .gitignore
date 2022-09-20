@@ -4,4 +4,4 @@ __pycache__
 static/list.json
 static/servers.js
 config.py
-
+*.mmdb

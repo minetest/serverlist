@@ -54,8 +54,7 @@ def index():
 def list():
 	# We have to make sure that the list isn't cached,
 	# since the list isn't really static.
-	return send_from_directory(app.static_folder, "list.json",
-			cache_timeout=0)
+	return send_from_directory(app.static_folder, "list.json", max_age=0)
 
 
 @app.route("/geoip")

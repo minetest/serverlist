@@ -1,0 +1,10 @@
+Server address does not include a DNS record for the IP that the announcement was sent from.
+Announce IP: {{ announce_ip }}
+Address records: {{ valid_addresses | join ", " }}
+
+Help: This is usually because your server is only listening on IPv4 but your announcement is being sent over IPv6.
+If that is the case there are two ways to fix this:
+ 1. (preferred) Set ipv6_server = true in your server config to listen on IPv6 and add your IPv6 address to DNS as an AAAA record.
+    On Linux this allows clients to connect using both IPv4 and IPv6 (unless you have enabled net.ipv6.bind6only).
+    On other operating systems this option may only work with IPv6 clients and you'll have to use the second option if you want to support IPv4.
+ 2. Set bind_address = 0.0.0.0 in your server config to force IPv4 only, the announce will then be sent from the IPv4 address.

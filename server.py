@@ -177,6 +177,7 @@ def announce():
 
 # Returns ping time in seconds (up), False (down), or None (error).
 def serverUp(info):
+	sock = None
 	try:
 		sock = socket.socket(info[0], info[1], info[2])
 		sock.settimeout(3)
@@ -214,12 +215,15 @@ def serverUp(info):
 		# [8] u8        controltype (CONTROLTYPE_DISCO)
 		buf = b"\x4f\x45\x74\x03" + peer_id + b"\x00\x00\x03"
 		sock.send(buf)
-		sock.close()
 		return end - start
-	except socket.timeout:
+	except (socket.timeout, socket.error):
 		return False
-	except:
+	except Exception as e:
+		app.logger.warning("Unexpected exception during serverUp: %r", e)
 		return None
+	finally:
+		if sock:
+			sock.close()
 
 
 # fieldName: (Required, Type, SubType)

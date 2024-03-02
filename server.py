@@ -27,6 +27,28 @@ else:
 
 # Helpers
 
+# checkRequestAddress() error codes
+ADDR_IS_PRIVATE      = 1
+ADDR_IS_INVALID      = 2
+ADDR_IS_INVALID_PORT = 3
+ADDR_IS_UNICODE      = 4
+ADDR_IS_EXAMPLE      = 5
+
+ADDR_ERROR_HELP_TEXTS = {
+	ADDR_IS_PRIVATE: "The server_address you provided is private or local. "
+		"It is only reachable in your local network.\n"
+		"If you meant to host a public server, adjust the setting and make sure your "
+		"firewall is permitting connections (e.g. port forwarding).",
+	ADDR_IS_INVALID: "The server_address you provided is invalid.\n"
+		"If you do not have a domain name or need to configure the external IP, "
+		"try removing the setting from your configuration.",
+	ADDR_IS_INVALID_PORT: "The server_address you provided is invalid.\n"
+		"Note that the value must not include a port number.",
+	ADDR_IS_UNICODE: "The server_address you provided includes Unicode characters.\n"
+		"If you have a domain name please enter the punycode notation.",
+	ADDR_IS_EXAMPLE: "The server_address you provided is an example value.",
+}
+
 def geoip_lookup_continent(ip):
 	if ip.startswith("::ffff:"):
 		ip = ip[7:]
@@ -133,6 +155,12 @@ def announce():
 		else:
 			return "Server to update not found."
 
+	# Since 'address' isn't the primary key it can change
+	if action == "start" or old.get("address") != server.get("address"):
+		err = checkRequestAddress(server)
+		if err:
+				return ADDR_ERROR_HELP_TEXTS[err], 400
+
 	server["update_time"] = int(time.time())
 
 	if action == "start":
@@ -224,6 +252,51 @@ def serverUp(info):
 	finally:
 		if sock:
 			sock.close()
+
+
+def checkRequestAddress(server):
+	# will fall back to IP of requester, can't possibly be wrong
+	if "address" not in server or not server["address"]:
+		return
+
+	name = server["address"].lower()
+
+	# example value from minetest.conf
+	if name == "game.minetest.net":
+		return ADDR_IS_EXAMPLE
+
+	# length limit for good measure
+	if len(name) > 255:
+		return ADDR_IS_INVALID
+	# characters invalid in DNS names and IPs
+	if any(c in name for c in " @#/*\"'\t\v\r\n\x00") or name.startswith("-"):
+		return ADDR_IS_INVALID
+	# if not ipv6, there must be at least one dot (two components)
+	# Note: This is not actually true ('com' is valid domain), but we'll assume
+	#       nobody who owns a TLD will ever host a Minetest server on the root domain.
+	#       getaddrinfo also allows specifying IPs as integers, we don't want people
+	#       to do that either.
+	if ":" not in name and "." not in name:
+		return ADDR_IS_INVALID
+
+	if app.config["REJECT_PRIVATE_ADDRESSES"]:
+		# private IPs (there are more but in practice these are 99% of cases)
+		PRIVATE_NETS = ("10.", "192.168.", "127.", "0.")
+		if any(name.startswith(s) for s in PRIVATE_NETS):
+			return ADDR_IS_PRIVATE
+		# reserved TLDs
+		RESERVED_TLDS = (".localhost", ".local", ".internal")
+		if name == "localhost" or any(name.endswith(s) for s in RESERVED_TLDS):
+			return ADDR_IS_PRIVATE
+
+	# ipv4/domain with port -or- ipv6 bracket notation
+	if ("." in name and ":" in name) or (":" in name and "[" in name):
+		return ADDR_IS_INVALID_PORT
+
+	# unicode in hostname
+	# Not sure about Python but the Minetest client definitely doesn't support it.
+	if any(ord(c) > 127 for c in name):
+		return ADDR_IS_UNICODE
 
 
 # fieldName: (Required, Type, SubType)

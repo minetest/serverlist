@@ -1,0 +1,28 @@
+name: lint
+
+on:
+  push:
+    paths:
+      - '**.py'
+      - 'requirements.txt'
+  pull_request:
+    paths:
+      - '**.py'
+      - 'requirements.txt'
+
+jobs:
+
+  pylint:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.11-slim
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          pip install pylint
+
+      - name: Lint
+        run: |
+          pylint -E --fail-on=E server.py

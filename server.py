@@ -33,10 +33,7 @@ def geoip_lookup_continent(ip):
 
 	if not reader:
 		return
-	try:
-		geo = reader.get(ip)
-	except geoip2.errors.GeoIP2Error:
-		return
+	geo = reader.get(ip)
 
 	if geo and "continent" in geo:
 		return geo["continent"]["code"]

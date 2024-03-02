@@ -1,4 +1,3 @@
-
 # Enables detailed tracebacks and an interactive Python console on errors.
 # Never use in production!
 DEBUG = False
@@ -26,3 +25,6 @@ BANNED_SERVERS = []
 # This WILL cause problems such as mapgen, mods and privilege information missing from the list
 ALLOW_UPDATE_WITHOUT_OLD = False
 
+# Reject servers with private addresses and domain names.
+# Enable this if you are running a list on the public internet.
+REJECT_PRIVATE_ADDRESSES = False

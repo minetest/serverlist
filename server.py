@@ -116,6 +116,17 @@ def announce():
 	elif "address" in server and server["address"].lower() in app.config["BANNED_SERVERS"]:
 		return "Banned (Server).", 403
 
+	tos_agree = False
+	if "tos_agree" in server:
+		tos_agree = server["tos_agree"]
+	if tos_agree != True and app.config["RULES"] !="":
+		return """NOTICE!
+Before your server can be listed, you must agree to the following terms:
+
+%s
+
+Please agree to these rules by setting 'announce_tos_agree' to true in minetest.conf
+"""%(app.config["RULES"]), 403
 	old = serverList.get(ip, server["port"])
 
 	if action == "delete":
@@ -250,6 +261,7 @@ fields = {
 	"description": (True, "str"),
 
 	# Flags
+	"tos_agree": (False, "bool"),
 	"creative": (False, "bool"),
 	"dedicated": (False, "bool"),
 	"damage": (False, "bool"),

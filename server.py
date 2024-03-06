@@ -89,7 +89,7 @@ def geoip():
 	return resp
 
 
-@app.route("/announce", methods=["GET", "POST"])
+@app.post("/announce")
 def announce():
 	ip = request.remote_addr
 	if ip.startswith("::ffff:"):
@@ -98,7 +98,7 @@ def announce():
 	if ip in app.config["BANNED_IPS"]:
 		return "Banned (IP).", 403
 
-	data = request.values["json"]
+	data = request.form["json"]
 
 	if len(data) > 8192:
 		return "JSON data is too big.", 413

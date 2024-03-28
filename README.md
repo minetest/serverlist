@@ -15,7 +15,7 @@ First install node.js, e.g.:
 
 Then install doT.js and its dependencies:
 
-	$ npm install dot commander mkdirp
+	$ npm install dot 'commander@12.0.0' mkdirp
 
 And finally compile the template:
 

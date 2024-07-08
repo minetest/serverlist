@@ -465,16 +465,9 @@ class ServerList:
 			points = 0
 
 			# 1 per client
-			if "clients_list" in server:
-				points += len(server["clients_list"])
-			else:
-				# Old server (1/4 per client)
-				points = server["clients"] / 4
+			points += server["clients"]
 
 			# Penalize highly loaded servers to improve player distribution.
-			# Note: This doesn't just make more than 80% of max players stop
-			# increasing your points, it can actually reduce your points
-			# if you have guests.
 			cap = int(server["clients_max"] * 0.80)
 			if server["clients"] > cap:
 				points -= server["clients"] - cap

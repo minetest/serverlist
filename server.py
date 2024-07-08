@@ -146,8 +146,10 @@ def announce():
 		serverList.remove(old)
 		serverList.save()
 		return "Removed from server list."
+	elif not checkRequestSchema(server):
+		return "JSON data does not conform to schema.", 400
 	elif not checkRequest(server):
-		return "Invalid JSON data.", 400
+		return "Incorrect JSON data.", 400
 
 	if action == "update" and not old:
 		if app.config["ALLOW_UPDATE_WITHOUT_OLD"]:
@@ -169,15 +171,7 @@ def announce():
 	else:
 		server["start"] = old["start"]
 
-	if "clients_list" in server:
-		server["clients"] = len(server["clients_list"])
-
 	server["clients_top"] = max(server["clients"], old["clients_top"]) if old else server["clients"]
-
-	if "url" in server:
-		url = server["url"]
-		if not any(url.startswith(p) for p in ["http://", "https://", "//"]):
-			del server["url"]
 
 	# Make sure that startup options are saved
 	if action == "update":
@@ -330,29 +324,29 @@ fields = {
 	"creative": (False, "bool"),
 	"dedicated": (False, "bool"),
 	"damage": (False, "bool"),
-	"liquid_finite": (False, "bool"),
 	"pvp": (False, "bool"),
 	"password": (False, "bool"),
 	"rollback": (False, "bool"),
 	"can_see_far_names": (False, "bool"),
 }
 
-def checkRequest(server):
+def checkRequestSchema(server):
 	for name, data in fields.items():
 		if not name in server:
 			if data[0]: return False
 			else: continue
 		#### Compatibility code ####
-		# Accept strings in boolean fields but convert it to a
-		# boolean, because old servers sent some booleans as strings.
-		if data[1] == "bool" and type(server[name]).__name__ == "str":
-			server[name] = True if server[name].lower() in ("true", "1") else False
-			continue
-		# Accept strings in integer fields but convert it to an
-		# integer, for interoperability with e.g. minetest.write_json.
-		if data[1] == "int" and type(server[name]).__name__ == "str":
-			server[name] = int(server[name])
-			continue
+		if isinstance(server[name], str):
+			# Accept strings in boolean fields but convert it to a
+			# boolean, because old servers sent some booleans as strings.
+			if data[1] == "bool":
+				server[name] = server[name].lower() in ("true", "1")
+				continue
+			# Accept strings in integer fields but convert it to an
+			# integer, for interoperability with e.g. minetest.write_json.
+			elif data[1] == "int":
+				server[name] = int(server[name])
+				continue
 		#### End compatibility code ####
 		if type(server[name]).__name__ != data[1]:
 			return False
@@ -360,6 +354,46 @@ def checkRequest(server):
 			for item in server[name]:
 				if type(item).__name__ != data[2]:
 					return False
+	return True
+
+def checkRequest(server):
+	# check numbers
+	for field in ("clients", "clients_max", "uptime", "game_time", "lag", "proto_min", "proto_max"):
+		if field in server and server[field] < 0:
+			return False
+
+	if server["proto_min"] > server["proto_max"]:
+		return False
+
+	BAD_CHARS = " \t\v\r\n\x00\x27"
+
+	# URL must be absolute and http(s)
+	if "url" in server:
+		url = server["url"]
+		if not url or not any(url.startswith(p) for p in ["http://", "https://"]) or \
+			any(c in url for c in BAD_CHARS):
+			del server["url"]
+
+	# reject funny business in client or mod list
+	if "clients_list" in server:
+		server["clients"] = len(server["clients_list"])
+		for val in server["clients_list"]:
+			if not val or any(c in val for c in BAD_CHARS):
+				return False
+
+	if "mods" in server:
+		for val in server["mods"]:
+			if not val or any(c in val for c in BAD_CHARS):
+				return False
+
+	# sanitize some text
+	for field in ("gameid", "mapgen", "version", "privs"):
+		if field in server:
+			s = server[field]
+			for c in BAD_CHARS:
+				s = s.replace(c, "")
+			server[field] = s
+
 	return True
 
 

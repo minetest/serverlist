@@ -16,7 +16,7 @@
 	<thead><tr>
 		{{? !master.no_address}}<th>Address[:Port]</th>{{?}}
 		{{? !master.no_clients}}<th>Players / Max{{? !master.no_avgtop}}<br/>Average / Top{{?}}</th>{{?}}
-		{{? !master.no_version}}<th class="version">Version, Game[, Mapgen]</th>{{?}}
+		{{? !master.no_version}}<th class="version">Version, Game, Mapgen</th>{{?}}
 		{{? !master.no_name}}<th>Name</th>{{?}}
 		{{? !master.no_description}}<th>Description</th>{{?}}
 		{{? !master.no_flags}}<th class="flags">Flags</th>{{?}}
@@ -47,7 +47,7 @@
 		{{? !master.no_name}}
 		<td class="name">
 			{{? server.url}}
-				<a href="{{!server.url}}">{{=tooltipString(server.name)}}</a>
+				<a href="{{!server.url}}" target="_blank">{{=tooltipString(server.name)}}</a>
 			{{??}}
 				{{=tooltipString(server.name)}}
 			{{?}}
@@ -63,8 +63,6 @@
 			{{=server.damage ? 'Dmg ' : ''}}
 			{{=server.pvp ? 'PvP ' : ''}}
 			{{=server.password ? 'Pwd ' : ''}}
-			{{=server.rollback ? 'Rol ' : ''}}
-			{{=server.can_see_far_names ? 'Far ' : ''}}
 		</td>{{?}}
 		{{? !master.no_uptime}}
 		<td class="uptime">
@@ -79,5 +77,5 @@
 	</tbody>
 </table>
 {{? master.min_clients || master.limit}}
-	<a href="javascript:delete master.min_clients; delete master.limit; get();">Show more...</a>
+	<a href="javascript:master.showAll()">Show all...</a>
 {{?}}

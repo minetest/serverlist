@@ -1,16 +1,21 @@
 var master;
-if (!master) master = {};
-if (typeof(master.root) == 'undefined')	master.root = window.location.href;
-if (!master.output)	master.output = '#server_list';
-if (!master.list)	master.list = "list";
-if (!master.list_root)	master.list_root = master.root;
-if (!master.list_url)	master.list_url = master.list_root + master.list;
+if (!master)
+	master = {};
+if (!master.root)
+	master.root = window.location.href;
+if (!master.list)
+	master.list = "list";
+if (!master.list_root)
+	master.list_root = master.root;
+if (!master.list_url)
+	master.list_url = master.list_root + master.list;
 master.cached_json = null;
 
 // Utility functions used by the templating code
 
 function humanTime(seconds) {
-	if (typeof(seconds) != "number") return '?';
+	if (typeof(seconds) != "number")
+		return '?';
 	var conv = {
 		y: 31536000,
 		d: 86400,
@@ -26,25 +31,25 @@ function humanTime(seconds) {
 }
 
 function escapeHTML(str) {
-	if(!str) return str;
+	if (!str)
+		return str;
 	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function addressString(server) {
-	var isIPv6 = server.address.indexOf(":") != -1;
-	var addrStr = (isIPv6 ? '[' : '') +
-		escapeHTML(server.address) +
-		(isIPv6 ? ']' : '');
+	var addrStr = server.address;
+	if (addrStr.indexOf(':') != -1)
+		addrStr = '[' + addrStr + ']';
 	var shortStr = addrStr;
 	addrStr += ':' + server.port;
 	var str = '<span'
-	if (shortStr.length > 25) {
-		shortStr = shortStr.substr(0, 23) + "&hellip;";
-		str += ' title="' + addrStr + '"'
+	if (shortStr.length > 26) {
+		shortStr = shortStr.substring(0, 25) + "\u2026";
+		str += ' title="' + escapeHTML(addrStr) + '"'
 	}
 	if (server.port != 30000)
 		shortStr += ':' + server.port;
-	return str + '>' + shortStr + '</span>';
+	return str + '>' + escapeHTML(shortStr) + '</span>';
 }
 
 function tooltipString(str) {
@@ -53,30 +58,36 @@ function tooltipString(str) {
 }
 
 function hoverList(name, list) {
-	if (!list || list.length == 0) return '';
+	if (!list || list.length == 0)
+		return '';
 	var str = '<div class="mts_hover_list">'
-	str += '<b>' + name + '</b> (' + list.length + ')<br />';
+	str += '<b>' + escapeHTML(name) + '</b> (' + list.length + ')<br />';
 	for (var i in list) {
 		str += escapeHTML(list[i]) + '<br />';
 	}
 	return str + '</div>';
 }
 
-function hoverString(name, string) {
-	if (!string) return '';
+function hoverString(name, str) {
+	if (!str)
+		return '';
+	if (typeof(str) != 'string')
+		str = str.toString();
 	return '<div class="mts_hover_list">'
-		+ '<b>' + name + '</b>:<br />'
-		+ escapeHTML(string) + '<br />'
+		+ '<b>' + escapeHTML(name) + '</b>:<br />'
+		+ escapeHTML(str) + '<br />'
 		+ '</div>';
 }
 
 function constantWidth(str, width) {
-	return '<span class="mts_cwidth" style="width:' + width + 'em;">' + str + '</span>';
+	if (typeof(str) != 'string')
+		str = str.toString();
+	return '<span class="mts_cwidth" style="width:' + width + 'em;">' + escapeHTML(str) + '</span>';
 }
 
 // Code that fetches & displays the actual list
 
-function draw(json) {
+master.draw = function(json) {
 	if (json == null)
 		return;
 
@@ -95,27 +106,32 @@ function draw(json) {
 	}
 
 	var html = window.render.servers(json);
-	jQuery(master.output).html(html);
+	jQuery('#server_list').html(html);
 
-	jQuery('.proto_select', master.output).on('change', function(e) {
+	jQuery('.proto_select', '#server_list').on('change', function(e) {
 		master.proto_range = e.target.value;
-		draw(master.cached_json); // re-render
+		master.draw(master.cached_json); // re-render
 	});
-}
+};
 
-function get() {
+master.get = function() {
 	jQuery.getJSON(master.list_url, function(json) {
 		master.cached_json = json;
-		draw(json);
+		master.draw(json);
 	});
-}
+};
 
-function loaded(){
-	if (!master.no_refresh) {
-		setInterval(get, 60 * 1000);
-	}
-	get();
-}
+master.loaded = function() {
+	if (!master.no_refresh)
+		setInterval(master.get, 60 * 1000);
+	master.get();
+};
+
+master.showAll = function() {
+	delete master.min_clients;
+	delete master.limit;
+	master.get();
+};
 
 
 // https://github.com/pyrsmk/toast
@@ -123,8 +139,8 @@ this.toast=function(){var e=document,t=e.getElementsByTagName("head")[0],n=this.
 
 toast(master.root + 'style.css', master.root + 'servers.js', function() {
 	if (typeof(jQuery) != 'undefined')
-		return loaded();
+		return master.loaded();
 	else
-		toast('//ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js', loaded);
+		toast('//ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js', master.loaded);
 });
 

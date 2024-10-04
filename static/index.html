@@ -13,6 +13,10 @@
 		a:visited {
 			color: #336BA1;
 		}
+		hr {
+			border: 0;
+			border-top: 3px solid #53ac56;
+		}
 		@media only screen and (max-width: 1024px) {
 			#server_list table .version, #server_list table .flags, #server_list table .uptime {
 				display: none;
@@ -24,6 +28,8 @@
 	</script>
 </head>
 <body>
+	<span class="h"><strong>Minetest server list</strong> | <a href="https://www.minetest.net/get-involved/#reporting-issues">Contact</a> | <a href="https://www.minetest.net/app-privacy-policy/">Privacy</a></span>
+	<hr />
 	<div id="server_list"></div>
 	<script src="list.js"></script>
 </body>

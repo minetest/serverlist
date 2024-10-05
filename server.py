@@ -167,7 +167,6 @@ def announce():
 
 	if action == "start":
 		server["start"] = int(time.time())
-		tracker.push("%s:%d" % (server["ip"], server["port"]), server["start"])
 	else:
 		server["start"] = old["start"]
 
@@ -442,29 +441,6 @@ def asyncFinishThread(server):
 	serverList.update(server)
 
 
-class UptimeTracker:
-	def  __init__(self):
-		self.d = {}
-		self.cleanTime = 0
-		self.lock = RLock()
-	def push(self, id, ts):
-		with self.lock:
-			if time.time() >= self.cleanTime: # clear once in a while
-				self.d.clear()
-				self.cleanTime = time.time() + 48*60*60
-
-			if id in self.d:
-				self.d[id] = self.d[id][-1:] + [ts]
-			else:
-				self.d[id] = [0, ts]
-	# returns the before-last start time, in bulk
-	def getStartTimes(self):
-		ret = {}
-		with self.lock:
-			for k, v in self.d.items():
-				ret[k] = v[0]
-		return ret
-
 class ServerList:
 	def __init__(self):
 		self.list = []
@@ -493,8 +469,6 @@ class ServerList:
 				pass
 
 	def sort(self):
-		start_times = tracker.getStartTimes()
-
 		def server_points(server):
 			points = 0
 
@@ -519,15 +493,6 @@ class ServerList:
 			# -8 per second of ping over 0.4s
 			if server["ping"] > 0.4:
 				points -= (server["ping"] - 0.4) * 8
-
-			# Up to -8 for less than an hour of uptime (penalty linearly decreasing)
-			# only if the server has restarted before within the last 2 hours
-			HOUR_SECS = 60 * 60
-			uptime = server["uptime"]
-			if uptime < HOUR_SECS:
-				start_time = start_times.get("%s:%d" % (server["ip"], server["port"]), 0)
-				if start_time >= time.time() - 2 * HOUR_SECS:
-					points -= ((HOUR_SECS - uptime) / HOUR_SECS) * 8
 
 			# reduction to 40% for servers that support both legacy (v4) and v5 clients
 			if server["proto_min"] <= 32 and server["proto_max"] > 36:
@@ -595,6 +560,7 @@ class ServerList:
 			self.sort()
 			self.save()
 
+
 class PurgeThread(Thread):
 	def __init__(self):
 		Thread.__init__(self)
@@ -605,8 +571,6 @@ class PurgeThread(Thread):
 			serverList.purgeOld()
 
 # Globals / Startup
-
-tracker = UptimeTracker()
 
 serverList = ServerList()
 

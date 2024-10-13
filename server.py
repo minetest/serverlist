@@ -410,6 +410,10 @@ def checkRequest(server):
 				s = s.replace(c, "")
 			server[field] = s
 
+	# default value
+	if "address" not in server or not server["address"]:
+		server["address"] = server["ip"]
+
 	return True
 
 
@@ -421,11 +425,7 @@ def finishRequestAsync(server):
 
 
 def asyncFinishThread(server):
-	checkAddress = False
-	if not "address" in server or not server["address"]:
-		server["address"] = server["ip"]
-	else:
-		checkAddress = True
+	checkAddress = server["ip"] != server["address"]
 
 	try:
 		info = socket.getaddrinfo(server["address"],

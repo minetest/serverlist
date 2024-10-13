@@ -196,8 +196,8 @@ def announce():
 
 	if old_err:
 		return ("Request has been filed, "
-			"but the previous request encountered with the following error:\n" +
-			err, 409)
+			"but the previous request encountered the following error:\n" +
+			old_err, 409)
 	return "Request has been filed.", 202
 
 # Utilities

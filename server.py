@@ -208,6 +208,10 @@ def getErrorPK(server):
 	# only happen depending on it.
 	return "%s/%s/%d" % (server["ip"], server["address"], server["port"])
 
+def isDomain(s):
+	# expressed as a regex: \.[A-Za-z][^.]*$
+	return "." in s and s.rpartition(".")[2][0].isalpha()
+
 # Returns ping time in seconds (up), False (down), or None (error).
 def serverUp(info):
 	sock = None
@@ -428,7 +432,7 @@ def asyncFinishThread(server):
 			type=socket.SOCK_DGRAM,
 			proto=socket.SOL_UDP)
 	except socket.gaierror:
-		err = "Unable to get address info for %s." % (server["address"],)
+		err = "Unable to get address info for %s" % server["address"]
 		app.logger.warning(err)
 		errorTracker.put(getErrorPK(server), err)
 		return
@@ -436,8 +440,9 @@ def asyncFinishThread(server):
 	if checkAddress:
 		addresses = set(data[4][0] for data in info)
 		if not server["ip"] in addresses:
-			err = "Requester IP %s does not match host %s (valid: %s)." % \
-				(server["ip"], server["address"], " ".join(addresses))
+			err = "Requester IP %s does not match host %s" % (server["ip"], server["address"])
+			if isDomain(server["address"]):
+				err += " (valid: %s)" % " ".join(addresses)
 			app.logger.warning(err)
 			errorTracker.put(getErrorPK(server), err)
 			return
@@ -448,8 +453,9 @@ def asyncFinishThread(server):
 
 	server["ping"] = serverUp(info[0])
 	if not server["ping"]:
-		err = "Server %s port %d did not respond to ping (tried %s)" % \
-			(server["address"], server["port"], info[0][4][0])
+		err = "Server %s port %d did not respond to ping" % (server["address"], server["port"])
+		if isDomain(server["address"]):
+			err += " (tried %s)" % info[0][4][0]
 		app.logger.warning(err)
 		errorTracker.put(getErrorPK(server), err)
 		return
@@ -599,7 +605,7 @@ class ErrorTracker:
 	def cleanup(self):
 		with self.lock:
 			now = time.monotonic()
-			table = {k: e for e in self.table if e[0] >= now}
+			table = {k: e for k, e in self.table.items() if e[0] >= now}
 			self.table = table
 
 

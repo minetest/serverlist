@@ -191,9 +191,9 @@ def announce():
 	server["pop_v"] = server["total_clients"] / server["updates"]
 
 	tmp = getErrorPK(server)
-	old_err = errorTracker(tmp)
+	old_err = errorTracker.get(tmp)
 	if old_err:
-		app.logger.info("pk=%r err=%r", tmp, old_err)
+		app.logger.warn("pk=%r err=%r", tmp, old_err)
 
 	finishRequestAsync(server)
 
@@ -451,7 +451,7 @@ def asyncFinishThread(server):
 		err = "Server %s port %d did not respond to ping (tried %s)" % \
 			(server["address"], server["port"], info[0][4][0])
 		app.logger.warning(err)
-		errorTracker.push(getErrorPK(server), err)
+		errorTracker.put(getErrorPK(server), err)
 		return
 
 	del server["action"]
@@ -594,7 +594,7 @@ class ErrorTracker:
 		with self.lock:
 			e = self.table.get(k)
 		if e and e[0] >= time.monotonic():
-			return e
+			return e[1]
 
 	def cleanup(self):
 		with self.lock:

@@ -190,13 +190,14 @@ def announce():
 		server["total_clients"] = server["clients"]
 	server["pop_v"] = server["total_clients"] / server["updates"]
 
-	tmp = getErrorPK(server)
-	old_err = errorTracker.get(tmp)
-	if old_err:
-		app.logger.warn("pk=%r err=%r", tmp, old_err)
+	old_err = errorTracker.get(getErrorPK(server))
 
 	finishRequestAsync(server)
 
+	if old_err:
+		return ("Request has been filed, "
+			"but the previous request encountered with the following error:\n" +
+			err, 409)
 	return "Request has been filed.", 202
 
 # Utilities
@@ -460,8 +461,9 @@ def asyncFinishThread(server):
 		errorTracker.put(getErrorPK(server), err)
 		return
 
+	# success!
+	errorTracker.remove(getErrorPK(server))
 	del server["action"]
-
 	serverList.update(server)
 
 
@@ -595,6 +597,10 @@ class ErrorTracker:
 	def put(self, k, info):
 		with self.lock:
 			self.table[k] = (time.monotonic() + ErrorTracker.VALIDITY_TIME, info)
+
+	def remove(self, k):
+		with self.lock:
+			self.table.pop(k, None)
 
 	def get(self, k):
 		with self.lock:

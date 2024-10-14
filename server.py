@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-import os, sys, json, time, socket
+import os
+import json
+import time
+import socket
 from threading import Thread, RLock
 from glob import glob
 
@@ -12,7 +15,7 @@ app = Flask(__name__, static_url_path = "")
 # Load configuration
 app.config.from_pyfile("config-example.py")  # Use example for defaults
 if os.path.isfile(os.path.join(app.root_path, "config.py")):
-        app.config.from_pyfile("config.py")
+	app.config.from_pyfile("config.py")
 
 tmp = glob(os.path.join(app.root_path, "dbip-country-lite-*.mmdb"))
 if tmp:
@@ -70,7 +73,7 @@ def index():
 
 
 @app.route("/list")
-def list():
+def list_json():
 	# We have to make sure that the list isn't cached,
 	# since the list isn't really static.
 	return send_from_directory(app.static_folder, "list.json", max_age=0)
@@ -105,31 +108,25 @@ def announce():
 
 	try:
 		server = json.loads(data)
-	except:
+	except json.JSONDecodeError:
 		return "Unable to process JSON data.", 400
 
-	if type(server) != dict:
+	if not isinstance(server, dict):
 		return "JSON data is not an object.", 400
 
-	if not "action" in server:
-		return "Missing action field.", 400
-
-	action = server["action"]
+	action = server.get("action")
 	if action not in ("start", "update", "delete"):
 		return "Invalid action field.", 400
-
-	if action == "start":
-		server["uptime"] = 0
 
 	server["ip"] = ip
 
 	if not "port" in server:
 		server["port"] = 30000
-	#### Compatability code ####
+	#### Compatibility code ####
 	# port was sent as a string instead of an integer
-	elif type(server["port"]) == str:
+	elif isinstance(server["port"], str):
 		server["port"] = int(server["port"])
-	#### End compatability code ####
+	#### End compatibility code ####
 
 	if "%s/%d" % (server["ip"], server["port"]) in app.config["BANNED_SERVERS"]:
 		return "Banned (Server).", 403
@@ -161,11 +158,12 @@ def announce():
 	if action == "start" or old.get("address") != server.get("address"):
 		err = checkRequestAddress(server)
 		if err:
-				return ADDR_ERROR_HELP_TEXTS[err], 400
+			return ADDR_ERROR_HELP_TEXTS[err], 400
 
 	server["update_time"] = int(time.time())
 
 	if action == "start":
+		server["uptime"] = 0
 		server["start"] = int(time.time())
 	else:
 		server["start"] = old["start"]
@@ -344,8 +342,9 @@ fields = {
 def checkRequestSchema(server):
 	for name, data in fields.items():
 		if not name in server:
-			if data[0]: return False
-			else: continue
+			if data[0]:
+				return False
+			continue
 		#### Compatibility code ####
 		if isinstance(server[name], str):
 			# Accept strings in boolean fields but convert it to a
@@ -355,7 +354,7 @@ def checkRequestSchema(server):
 				continue
 			# Accept strings in integer fields but convert it to an
 			# integer, for interoperability with e.g. minetest.write_json.
-			elif data[1] == "int":
+			if data[1] == "int":
 				server[name] = int(server[name])
 				continue
 		#### End compatibility code ####
@@ -486,7 +485,7 @@ class ServerList:
 		with self.lock:
 			try:
 				self.list.remove(server)
-			except:
+			except ValueError:
 				pass
 
 	def sort(self):
@@ -535,7 +534,7 @@ class ServerList:
 	def load(self):
 		with self.lock:
 			try:
-				with open(os.path.join(app.static_folder, "list.json"), "r") as fd:
+				with open(os.path.join(app.static_folder, "list.json"), "r", encoding="utf-8") as fd:
 					data = json.load(fd)
 			except FileNotFoundError:
 				return
@@ -558,7 +557,7 @@ class ServerList:
 			self.maxClients = max(clients, self.maxClients)
 
 			list_path = os.path.join(app.static_folder, "list.json")
-			with open(list_path + "~", "w") as fd:
+			with open(list_path + "~", "w", encoding="utf-8") as fd:
 				json.dump({
 						"total": {"servers": servers, "clients": clients},
 						"total_max": {"servers": self.maxServers, "clients": self.maxClients},

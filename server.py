@@ -264,10 +264,6 @@ def serverUp(info):
 
 
 def checkRequestAddress(server):
-	# will fall back to IP of requester, can't possibly be wrong
-	if "address" not in server or not server["address"]:
-		return
-
 	name = server["address"].lower()
 
 	# example value from minetest.conf

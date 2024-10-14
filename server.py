@@ -434,13 +434,20 @@ def asyncFinishThread(server):
 
 	if checkAddress:
 		addresses = set(data[4][0] for data in info)
-		if not server["ip"] in addresses:
+		have_v4 = any("." in s for s in addresses)
+		have_v6 = any(":" in s for s in addresses)
+		if server["ip"] in addresses:
+			pass
+		elif (":" in server["ip"] and not have_v6) or ("." in server["ip"] and not have_v4):
+			pass
+		else:
 			err = "Requester IP %s does not match host %s" % (server["ip"], server["address"])
 			if isDomain(server["address"]):
 				err += " (valid: %s)" % " ".join(addresses)
 			app.logger.warning(err)
-			errorTracker.put(getErrorPK(server), err)
-			return
+			if not isDomain(server["address"]): # temp
+				errorTracker.put(getErrorPK(server), err)
+				return
 
 	geo = geoip_lookup_continent(info[-1][4][0])
 	if geo:

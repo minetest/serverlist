@@ -205,12 +205,11 @@ def announce():
 # returns a primary key suitable for saving and replaying an error unique to a
 # server that was announced.
 def getErrorPK(server):
-	# We need to include the client IP in here, since some failures
-	# only happen depending on it.
-	return "%s/%s/%d" % (server["ip"], server["address"], server["port"])
+	# some failures depend on the client IP too
+	return(server["ip"], server["address"], server["port"])
 
+# check if something is a domain name (approximate)
 def isDomain(s):
-	# expressed as a regex: \.[A-Za-z][^.]*$
 	return "." in s and s.rpartition(".")[2][0].isalpha()
 
 # Returns ping time in seconds (up), False (down), or None (error).

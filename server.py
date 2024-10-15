@@ -439,13 +439,17 @@ def asyncFinishThread(server):
 		if server["ip"] in addresses:
 			pass
 		elif (":" in server["ip"] and not have_v6) or ("." in server["ip"] and not have_v4):
+			# If the client is ipv6 and there is no ipv6 on the domain (or the inverse)
+			# then the check cannot possibly ever succeed.
+			# Because this often happens accidentally just tolerate it.
 			pass
 		else:
 			err = "Requester IP %s does not match host %s" % (server["ip"], server["address"])
 			if isDomain(server["address"]):
 				err += " (valid: %s)" % " ".join(addresses)
 			app.logger.warning(err)
-			if not isDomain(server["address"]): # temp
+			# TODO make this warning for the time being
+			if not isDomain(server["address"]):
 				errorTracker.put(getErrorPK(server), err)
 				return
 

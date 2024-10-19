@@ -188,14 +188,19 @@ def announce():
 		server["total_clients"] = server["clients"]
 	server["pop_v"] = server["total_clients"] / server["updates"]
 
-	old_err = errorTracker.get(getErrorPK(server))
+	err = errorTracker.get(getErrorPK(server))
 
 	finishRequestAsync(server)
 
-	if old_err:
-		return ("Request has been filed, "
-			"but the previous request encountered the following error:\n" +
-			old_err, 409)
+	if err:
+		warn, text = err
+		if warn:
+			text = ("Request has been filed and the previous one was successful, "
+				"but take note:\n" + text)
+		else:
+			text = ("Request has been filed, "
+				"but the previous request encountered the following error:\n" + text)
+		return text, 409
 	return "Request has been filed.", 202
 
 # Utilities
@@ -420,6 +425,7 @@ def finishRequestAsync(server):
 
 def asyncFinishThread(server):
 	checkAddress = server["ip"] != server["address"]
+	errorTracker.remove(getErrorPK(server))
 
 	try:
 		info = socket.getaddrinfo(server["address"],
@@ -429,7 +435,7 @@ def asyncFinishThread(server):
 	except socket.gaierror:
 		err = "Unable to get address info for %s" % server["address"]
 		app.logger.warning(err)
-		errorTracker.put(getErrorPK(server), err)
+		errorTracker.put(getErrorPK(server), (False, err))
 		return
 
 	if checkAddress:
@@ -448,9 +454,12 @@ def asyncFinishThread(server):
 			if isDomain(server["address"]):
 				err += " (valid: %s)" % " ".join(addresses)
 			app.logger.warning(err)
-			# TODO make this warning for the time being
-			if not isDomain(server["address"]):
-				errorTracker.put(getErrorPK(server), err)
+			if isDomain(server["address"]):
+				# handle as warning
+				err += "\nThis will become a strict requirement in Nov 2024. You may have to set bind_address."
+				errorTracker.put(getErrorPK(server), (True, err))
+			else:
+				errorTracker.put(getErrorPK(server), (False, err))
 				return
 
 	geo = geoip_lookup_continent(info[-1][4][0])
@@ -463,11 +472,10 @@ def asyncFinishThread(server):
 		if isDomain(server["address"]):
 			err += " (tried %s)" % info[0][4][0]
 		app.logger.warning(err)
-		errorTracker.put(getErrorPK(server), err)
+		errorTracker.put(getErrorPK(server), (False, err))
 		return
 
 	# success!
-	errorTracker.remove(getErrorPK(server))
 	del server["action"]
 	serverList.update(server)
 

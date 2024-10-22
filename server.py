@@ -440,8 +440,8 @@ def asyncFinishThread(server):
 
 	if checkAddress:
 		addresses = set(data[4][0] for data in info)
-		have_v4 = any("." in s for s in addresses)
-		have_v6 = any(":" in s for s in addresses)
+		have_v4 = any(d[0] == socket.AF_INET for d in info)
+		have_v6 = any(d[0] == socket.AF_INET6 for d in info)
 		if server["ip"] in addresses:
 			pass
 		elif (":" in server["ip"] and not have_v6) or ("." in server["ip"] and not have_v4):

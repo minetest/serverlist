@@ -188,14 +188,19 @@ def announce():
 		server["total_clients"] = server["clients"]
 	server["pop_v"] = server["total_clients"] / server["updates"]
 
-	old_err = errorTracker.get(getErrorPK(server))
+	err = errorTracker.get(getErrorPK(server))
 
 	finishRequestAsync(server)
 
-	if old_err:
-		return ("Request has been filed, "
-			"but the previous request encountered the following error:\n" +
-			old_err, 409)
+	if err:
+		warn, text = err
+		if warn:
+			text = ("Request has been filed and the previous one was successful, "
+				"but take note:\n" + text)
+		else:
+			text = ("Request has been filed, "
+				"but the previous request encountered the following error:\n" + text)
+		return text, 409
 	return "Request has been filed.", 202
 
 # Utilities
@@ -420,6 +425,7 @@ def finishRequestAsync(server):
 
 def asyncFinishThread(server):
 	checkAddress = server["ip"] != server["address"]
+	errorTracker.remove(getErrorPK(server))
 
 	try:
 		info = socket.getaddrinfo(server["address"],
@@ -429,18 +435,32 @@ def asyncFinishThread(server):
 	except socket.gaierror:
 		err = "Unable to get address info for %s" % server["address"]
 		app.logger.warning(err)
-		errorTracker.put(getErrorPK(server), err)
+		errorTracker.put(getErrorPK(server), (False, err))
 		return
 
 	if checkAddress:
 		addresses = set(data[4][0] for data in info)
-		if not server["ip"] in addresses:
+		have_v4 = any(d[0] == socket.AF_INET for d in info)
+		have_v6 = any(d[0] == socket.AF_INET6 for d in info)
+		if server["ip"] in addresses:
+			pass
+		elif (":" in server["ip"] and not have_v6) or ("." in server["ip"] and not have_v4):
+			# If the client is ipv6 and there is no ipv6 on the domain (or the inverse)
+			# then the check cannot possibly ever succeed.
+			# Because this often happens accidentally just tolerate it.
+			pass
+		else:
 			err = "Requester IP %s does not match host %s" % (server["ip"], server["address"])
 			if isDomain(server["address"]):
 				err += " (valid: %s)" % " ".join(addresses)
 			app.logger.warning(err)
-			errorTracker.put(getErrorPK(server), err)
-			return
+			if isDomain(server["address"]):
+				# handle as warning
+				err += "\nThis will become a strict requirement in Nov 2024. You may have to set bind_address."
+				errorTracker.put(getErrorPK(server), (True, err))
+			else:
+				errorTracker.put(getErrorPK(server), (False, err))
+				return
 
 	geo = geoip_lookup_continent(info[-1][4][0])
 	if geo:
@@ -452,11 +472,10 @@ def asyncFinishThread(server):
 		if isDomain(server["address"]):
 			err += " (tried %s)" % info[0][4][0]
 		app.logger.warning(err)
-		errorTracker.put(getErrorPK(server), err)
+		errorTracker.put(getErrorPK(server), (False, err))
 		return
 
 	# success!
-	errorTracker.remove(getErrorPK(server))
 	del server["action"]
 	serverList.update(server)
 

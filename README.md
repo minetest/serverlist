@@ -1,4 +1,4 @@
-Minetest server list
+Luanti server list
 ====================
 
 Setting up the webpage
@@ -32,7 +32,7 @@ Embedding the server list in a page
 		...
 		<script>
 			var master = {
-				root: 'https://servers.minetest.net/',
+				root: 'https://servers.luanti.org/',
 				limit: 10,
 				clients_min: 1,
 				no_flags: true,
@@ -46,7 +46,7 @@ Embedding the server list in a page
 		...
 		<div id="server_list"></div>
 		...
-		<script src="https://servers.minetest.net/list.js"></script>
+		<script defer src="https://servers.luanti.org/list.js"></script>
 	</body>
 
 Setting up the server
@@ -75,7 +75,7 @@ Setting up the server
 
 	$ ./server.py
 	$ # Or for production:
-	$ uwsgi -s /tmp/minetest-master.sock --plugin python -w server:app --enable-threads
+	$ uwsgi -s /run/serverlist.sock --plugin python -w server:app --enable-threads
 	$ # Then configure according to http://flask.pocoo.org/docs/deploying/uwsgi/
 
   7. (optional) Configure the proxy server, if any.  You should make the server
@@ -83,10 +83,12 @@ Setting up the server
 	 should be served from `list.json`.  Example for nginx:
 
 	root /path/to/server/static;
-	rewrite ^/list$ /list.json;
+	rewrite ^/$ /index.html break;
+	rewrite ^/list$ /list.json break;
 	try_files $uri @uwsgi;
 	location @uwsgi {
-		uwsgi_pass ...;
+		include uwsgi_params;
+		uwsgi_pass unix:/run/serverlist.sock;
 	}
 
 Setting up the server (Apache version)
@@ -96,30 +98,29 @@ If you wish to use Apache to host the server list, do steps 1-2, 4, above. Addit
 
 	# This config assumes you have the server list at DocumentRoot.
 	# Visitors to the server list in this config would visit http://local.server/ and
-	# apache would serve up the output from server.py. Static resources would be served
-	# from http://local.server/static.
+	# apache would serve up the output from server.py.
 
-	# Where are the minetest-server files located?
-	DocumentRoot /var/games/minetest/serverlist
+	# Where are the serverlist files located?
+	DocumentRoot /var/games/luanti/serverlist
 
 	# Serve up server.py at the root of the URL.
-	WSGIScriptAlias / /var/games/minetest/serverlist/server.py
+	WSGIScriptAlias / /var/games/luanti/serverlist/server.py
 
 	# The name of the function that we call when we invoke server.py
 	WSGICallableObject app
 
 	# These options are necessary to enable Daemon mode. Without this, you'll have strange behavior
 	# with servers dropping off your list! You can tweak threads as needed. See mod_wsgi documentation.
-	WSGIProcessGroup minetest-serverlist
-	WSGIDaemonProcess minetest-serverlist threads=2
+	WSGIProcessGroup luanti-serverlist
+	WSGIDaemonProcess luanti-serverlist threads=2
 
-	<Directory /var/games/minetest/serverlist>
+	<Directory /var/games/luanti/serverlist>
 		Require all granted
 	</Directory>
 
 License
 -------
 
-The Minetest server list code is licensed under the GNU Lesser General Public
+The Luanti server list code is licensed under the GNU Lesser General Public
 License version 2.1 or later (LGPLv2.1+).  A LICENSE.txt file should have been
 supplied with your copy of this software containing a copy of the license.

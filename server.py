@@ -281,7 +281,7 @@ def checkRequestAddress(server):
 		return ADDR_IS_INVALID
 	# if not ipv6, there must be at least one dot (two components)
 	# Note: This is not actually true ('com' is valid domain), but we'll assume
-	#       nobody who owns a TLD will ever host a Minetest server on the root domain.
+	#       nobody who owns a TLD will ever host a Luanti server on the root domain.
 	#       getaddrinfo also allows specifying IPs as integers, we don't want people
 	#       to do that either.
 	if ":" not in name and "." not in name:
@@ -302,7 +302,7 @@ def checkRequestAddress(server):
 		return ADDR_IS_INVALID_PORT
 
 	# unicode in hostname
-	# Not sure about Python but the Minetest client definitely doesn't support it.
+	# Not sure about Python but the Luanti client definitely doesn't support it.
 	if any(ord(c) > 127 for c in name):
 		return ADDR_IS_UNICODE
 
@@ -358,7 +358,7 @@ def checkRequestSchema(server):
 				server[name] = server[name].lower() in ("true", "1")
 				continue
 			# Accept strings in integer fields but convert it to an
-			# integer, for interoperability with e.g. minetest.write_json.
+			# integer, for interoperability with e.g. core.write_json().
 			if data[1] == "int":
 				server[name] = int(server[name])
 				continue

@@ -8,7 +8,7 @@ HOST = "127.0.0.1"
 PORT = 5000
 
 # Amount of time, is seconds, after which servers are removed from the list
-# if they haven't updated their listings.  Note: By default Minetest servers
+# if they haven't updated their listings.  Note: By default Luanti servers
 # only announce once every 5 minutes, so this should be more than 300.
 PURGE_TIME = 350
 

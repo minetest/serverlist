@@ -102,6 +102,8 @@ root /path/to/server/static;
 rewrite ^/$ /index.html break;
 rewrite ^/list$ /list.json break;
 
+location = /list.json { expires 20s; }
+
 try_files $uri @uwsgi;
 location @uwsgi {
 	include uwsgi_params;

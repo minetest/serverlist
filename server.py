@@ -43,12 +43,11 @@ ADDR_ERROR_HELP_TEXTS = {
 		"If you meant to host a public server, adjust the setting and make sure your "
 		"firewall is permitting connections (e.g. port forwarding).",
 	ADDR_IS_INVALID: "The server_address you provided is invalid.\n"
-		"If you do not have a domain name or need to configure the external IP, "
-		"try removing the setting from your configuration.",
+		"If you don't have a domain name, try removing the setting from your configuration.",
 	ADDR_IS_INVALID_PORT: "The server_address you provided is invalid.\n"
 		"Note that the value must not include a port number.",
 	ADDR_IS_UNICODE: "The server_address you provided includes Unicode characters.\n"
-		"If you have a domain name please enter the punycode notation.",
+		"For domain names you have to use the punycode notation.",
 	ADDR_IS_EXAMPLE: "The server_address you provided is an example value.",
 }
 
@@ -270,7 +269,8 @@ def checkRequestAddress(server):
 	name = server["address"].lower()
 
 	# example value from minetest.conf
-	if name == "game.minetest.net":
+	EXAMPLE_TLDS = (".example.com", ".example.net", ".example.org")
+	if name == "game.minetest.net" or any(name.endswith(s) for s in EXAMPLE_TLDS):
 		return ADDR_IS_EXAMPLE
 
 	# length limit for good measure

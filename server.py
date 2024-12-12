@@ -81,28 +81,6 @@ def list_json():
 @app.route("/server/<string:ip>/<int:port>")
 def get_server(ip, port):
     try:
-        # Validate IP address
-        if ":" in ip:
-            # IPv6 address
-            parts = ip.split(":")
-            if len(parts) > 8:
-                raise ValueError("Invalid IPv6 address")
-            for part in parts:
-                if not part or len(part) > 4:
-                    raise ValueError("Invalid IPv6 address")
-        else:
-            # IPv4 address
-            parts = ip.split(".")
-            if len(parts) != 4:
-                raise ValueError("Invalid IPv4 address")
-            for part in parts:
-                if not part.isdigit() or not 0 <= int(part) <= 255:
-                    raise ValueError("Invalid IPv4 address")
-
-        # Validate port
-        if port < 0 or port > 65535:
-            raise ValueError("Invalid port")
-
         server = serverList.get(ip, port)
         if server:
             return server
